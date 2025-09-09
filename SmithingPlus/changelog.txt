@@ -3,6 +3,12 @@
 - TODO Store overall transform for flip tool mode to properly reconstruct recipe outline rotation.
     Current method can have bugs and is harder to maintain.
 - TODO [Minor] Bug in client tweak for anvil ingredient count. The first time the dialog is opened, the tweak doesn't get applied.
+- TODO [Minor] Auto transform for forgeable toolheads?
 
-v1.7.4
-- [Fix] Wrong output count on some bits recycling recipes because code would try to recycle the chisel instead
+- TODO [MAJOR] Rework tool detection system to not use wildcard or cache it / regen it
+
+v1.7.5
+- [Fix] Config Lib config now displays separators properly
+- [Tweak] Config Lib config now uses lang entries for hints
+- [Tweak] Do not include unnecessary field GetToolRepairForgettableAttributes in the config
+- [Fix] Chiseling work items failed

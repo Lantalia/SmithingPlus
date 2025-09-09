@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Text;
 using HarmonyLib;
+using JetBrains.Annotations;
 using SmithingPlus.Util;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
@@ -49,6 +50,7 @@ public class CollectibleBehaviorBrokenToolHead(CollectibleObject collObj) : Coll
         if (Core.Config.DontRepairBrokenToolHeads) dsc.AppendLine(Lang.Get($"{Core.ModId}:itemdesc-needschiseling"));
     }
 
+    [UsedImplicitly]
     [HarmonyPostfix]
     [HarmonyPatch(nameof(ItemWorkItem.GetHeldItemInfo))]
     public static void Postfix_GetHeldItemInfo(

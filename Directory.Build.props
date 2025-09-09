@@ -2,5 +2,9 @@
     <!-- Set your vs installation here! -->
     <PropertyGroup>
         <VINTAGE_STORY>$(VINTAGE_STORY_1_21)</VINTAGE_STORY>
+        <WorldName>[TEST] SmithingPlus</WorldName>
+        <TestDir>$(SolutionDir)/test</TestDir>
+        <TestDataPath>$(TestDir)/VintagestoryData</TestDataPath>
+        <DevModPath>$(HOME)/Library/Application Support/VintagestoryDev/Mods</DevModPath>
     </PropertyGroup>
 </Project>

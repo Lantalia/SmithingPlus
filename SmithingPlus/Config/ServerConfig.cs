@@ -1,4 +1,5 @@
 using System.Linq;
+using Newtonsoft.Json;
 using SmithingPlus.Util;
 
 namespace SmithingPlus.Config;
@@ -41,6 +42,7 @@ public class ServerConfig
     public bool HandbookExtraInfo { get; set; } = true;
 
     // public bool StoneSmithing { get; set; } = false;
+    [JsonIgnore]
     public string[] GetToolRepairForgettableAttributes =>
         ToolRepairForgettableAttributes.Split(",")
             .Append("durability")

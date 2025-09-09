@@ -8,7 +8,8 @@
         "type": "item",
         "code": "game:chisel-*",
         "isTool": true,
-        "toolDurabilityCost": 10
+        "toolDurabilityCost": 10,
+        "recipeAttributes": { "recyclingRecipe": true }
       },
       "W": { "type": "item", "code": "game:workitem-*", "name": "metal" }
     },

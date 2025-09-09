@@ -1,5 +1,6 @@
 bin/
 obj/
+test/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
@@ -10,3 +11,4 @@ riderModule.iml
 *.sln.DotSettings.user
 /.vs/SmithingPlus
 /.vs/ProjectEvaluation
+/test

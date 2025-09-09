@@ -7,13 +7,13 @@ using Vintagestory.API.Server;
 
 namespace SmithingPlus.HammerTweaks;
 
-[UsedImplicitly]
+[UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
 public class HammerTweaksNetwork : ModSystem
 {
     private const string ChannelName = $"{Core.ModId}:{Core.HammerTweaksCategory}";
 
     /// <summary>
-    ///     Always null on servers, stores the original tool modes count for the client.
+    /// Always null on servers, stores the original tool modes count for the client.
     /// </summary>
     public static int? OriginalToolModesCount { get; set; }
 
