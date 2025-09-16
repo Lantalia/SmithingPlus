@@ -1,18 +1,35 @@
 [
   {
     "file": "xskills:itemtypes/metalbits/metalbit.json",
-    "op": "addmerge",
+    "op": "addMerge",
     "path": "/attributes",
-    "value": { "isPureMetal": true },
+    "value": {
+      "isPureMetal": true
+    },
     "side": "Server",
-    "dependsOn": [ { "modid": "xskills" } ]
+    "dependsOn": [
+      {
+        "modid": "xskills"
+      }
+    ]
   },
   {
     "file": "xskills:itemtypes/metalbits/metalbit.json",
-    "op": "replace",
-    "path": "/class",
-    "value": "ItemXWorkableNugget",
+    "op": "addMerge",
+    "path": "/behaviors",
+    "value": [
+      {
+        "name": "smithingplus:WorkableNugget",
+        "properties": {
+          "ignoreExtraVoxels": true
+        }
+      }
+    ],
     "side": "Server",
-    "dependsOn": [ { "modid": "xskills" } ]
+    "dependsOn": [
+      {
+        "modid": "xskills"
+      }
+    ]
   }
 ]

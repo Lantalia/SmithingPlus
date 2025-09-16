@@ -2,8 +2,10 @@
   {
     "ingredient": {
       "type": "item",
-      "code": "game:ingot-*",
-      "recipeAttributes": { "nuggetRecipe": true },
+      "code": "game:metalbit-*",
+      "recipeAttributes": {
+        "nuggetRecipe": true
+      },
       "name": "metal",
       "allowedVariants": [
         "copper",
@@ -24,6 +26,10 @@
         "_________"
       ]
     ],
-    "output": { "type": "item", "code": "butchering:hook-{metal}", "stacksize": 1 }
+    "output": {
+      "type": "item",
+      "code": "butchering:hook-{metal}",
+      "stacksize": 1
+    }
   }
 ]

@@ -16,7 +16,7 @@ public partial class Core
     private const string MoldStacksCacheKey = $"{ModId}:moldStacks";
     private const string MetalBitStacksCacheKey = $"{ModId}:metalbitStacks";
     private const string CastableMetalVariantsCacheKey = $"{ModId}:castableMetalVariants";
-    private const string MetalMaterialCacheKey = $"{ModId}:metalMaterial";
+    internal const string MetalMaterialCacheKey = $"{ModId}:metalMaterial";
 
     public static Dictionary<int, string> RecipeOutputNameCache =>
         ObjectCacheUtil.GetOrCreate(Api, RecipeOutputNameCacheKey, () => new Dictionary<int, string>());

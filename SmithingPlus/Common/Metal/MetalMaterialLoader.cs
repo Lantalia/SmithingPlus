@@ -74,9 +74,9 @@ public class MetalMaterialLoader : ModSystem
         ResolvedMaterials = _metalMaterials
             .Where(kvp => kvp.Value.Resolved)
             .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-        Core.Logger.Notification("[Metal Material] Done resolving metal materials.");
+        Core.Logger.Notification("[MetalMaterial] Done resolving metal materials.");
         Core.Logger.Notification(
-            $"[Metal Material] Resolved {resolvedCount} out of {_metalMaterials.Count} metal materials.");
+            $"[MetalMaterial] Resolved {resolvedCount} out of {_metalMaterials.Count} metal materials.");
     }
 
     public static MetalMaterial? GetMaterial(ICoreAPI api, AssetLocation code)

@@ -2,8 +2,10 @@
   {
     "ingredient": {
       "type": "item",
-      "code": "game:ingot-*",
-      "recipeAttributes": { "nuggetRecipe": true },
+      "code": "game:metalbit-*",
+      "recipeAttributes": {
+        "nuggetRecipe": true
+      },
       "name": "metal",
       "allowedVariants": [
         "copper",
@@ -17,7 +19,15 @@
         "steel"
       ]
     },
-    "pattern": [ [ "___##___", "___##___", "___##___", "___##___", "___##___" ] ],
+    "pattern": [
+      [
+        "___##___",
+        "___##___",
+        "___##___",
+        "___##___",
+        "___##___"
+      ]
+    ],
     "name": "1 set of nails",
     "output": {
       "type": "item",

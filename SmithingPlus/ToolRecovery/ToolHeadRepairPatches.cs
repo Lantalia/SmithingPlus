@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
+using JetBrains.Annotations;
 using SmithingPlus.Util;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
@@ -13,16 +14,17 @@ namespace SmithingPlus.ToolRecovery;
 
 [HarmonyPatch]
 [HarmonyPatchCategory(Core.ToolRecoveryCategory)]
+[UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public class ToolHeadRepairPatches
 {
-    private static void ClampDurability(ItemStack itemstack)
+    private static void ClampDurability(ItemStack itemStack)
     {
-        if (!itemstack.Attributes.HasAttribute("durability")) return;
-        var maxDurability = itemstack.Collectible.GetMaxDurability(itemstack);
-        var durability = itemstack.Attributes.GetInt("durability");
-        itemstack.Attributes.SetInt("durability", Math.Min(durability, maxDurability));
+        if (!itemStack.Attributes.HasAttribute("durability")) return;
+        var maxDurability = itemStack.Collectible.GetMaxDurability(itemStack);
+        var durability = itemStack.Attributes.GetInt("durability");
+        itemStack.Attributes.SetInt("durability", Math.Min(durability, maxDurability));
     }
-    
+
     // Clamp durability if configs changed max durability
     [HarmonyPostfix]
     [HarmonyPatch(typeof(CollectibleObject), nameof(CollectibleObject.SetDurability))]
@@ -49,7 +51,7 @@ public class ToolHeadRepairPatches
         if (brokenCount < 0) return;
         ClampDurability(itemstack);
     }
-    
+
     [HarmonyPostfix]
     [HarmonyPatch(typeof(CollectibleObject), nameof(CollectibleObject.GetMaxDurability))]
     [HarmonyPriority(int.MinValue)]
@@ -58,9 +60,8 @@ public class ToolHeadRepairPatches
         if (!itemstack.Collectible.HasBehavior<CollectibleBehaviorRepairableTool>()) return;
         var brokenCount = itemstack.GetBrokenCount();
         if (brokenCount < 0) return;
-        var multiplier = Core.Config.RepairableToolDurabilityMultiplier *
-                         itemstack.Attributes.GetFloat(ModAttributes.SmithingQuality, 1);
-        var toolRepairPenaltyModifier = itemstack.Attributes.GetFloat(ModAttributes.ToolRepairPenaltyModifier);
+        var multiplier = Core.Config.RepairableToolDurabilityMultiplier * itemstack.GetSmithingQuality();
+        var toolRepairPenaltyModifier = itemstack.GetToolRepairPenaltyModifier();
         var toolRepairPenalty = brokenCount * Core.Config.DurabilityPenaltyPerRepair * (1 - toolRepairPenaltyModifier);
         var reducedDurability = (int)(__result * multiplier * (1 - toolRepairPenalty));
         __result = Math.Max(reducedDurability, 1);
@@ -71,7 +72,7 @@ public class ToolHeadRepairPatches
         var smithingQuality = byPlayer?.Entity.Stats.GetBlended(ModStats.SmithingQuality) ??
                               Core.Config.HelveHammerSmithingQualityModifier;
         if (Math.Abs(smithingQuality - 1) > 1E-3)
-            itemstack.Attributes.SetFloat(ModAttributes.SmithingQuality, smithingQuality);
+            itemstack.SetSmithingQuality(smithingQuality);
         Core.Logger.VerboseDebug("ModifyBrokenCount: {0} by {1}", itemstack.Collectible.Code, instance.WorkItemStack);
         if (instance.WorkItemStack.GetBrokenCount() == 0) return;
         itemstack.CloneRepairedToolStackOrAttributes(instance.WorkItemStack,
@@ -79,8 +80,7 @@ public class ToolHeadRepairPatches
         itemstack.SetRepairSmith(byPlayer?.PlayerName ?? Lang.Get("item-helvehammer"));
         var toolRepairPenaltyStat = byPlayer?.Entity.Stats.GetBlended(ModStats.ToolRepairPenalty) ?? 1;
         if (Math.Abs(toolRepairPenaltyStat - 1) > 1E-3)
-            itemstack.Attributes.SetFloat(ModAttributes.ToolRepairPenaltyModifier,
-                (float)Math.Round(toolRepairPenaltyStat - 1, 3));
+            itemstack.SetToolRepairPenaltyModifier((float)Math.Round(toolRepairPenaltyStat - 1, 3));
     }
 
     [HarmonyTranspiler]

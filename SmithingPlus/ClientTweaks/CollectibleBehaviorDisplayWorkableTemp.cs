@@ -6,12 +6,8 @@ using Vintagestory.API.Config;
 
 namespace SmithingPlus.ClientTweaks;
 
-public class CollectibleBehaviorAnvilWorkable : CollectibleBehavior
+public class CollectibleBehaviorDisplayWorkableTemp(CollectibleObject collObj) : CollectibleBehavior(collObj)
 {
-    public CollectibleBehaviorAnvilWorkable(CollectibleObject collObj) : base(collObj)
-    {
-    }
-
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
         base.GetHeldItemInfo(inSlot, dsc, world, withDebugInfo);

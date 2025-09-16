@@ -1,8 +1,10 @@
 {
   "ingredient": {
     "type": "item",
-    "code": "game:ingot-*",
-    "recipeAttributes": { "nuggetRecipe": true },
+    "code": "game:metalbit-*",
+    "recipeAttributes": {
+      "nuggetRecipe": true
+    },
     "name": "metal",
     "allowedVariants": [
       "bismuth",
@@ -30,7 +32,16 @@
       "zinc"
     ]
   },
-  "pattern": [ [ "###__###_", "#_##_#_##" ] ],
+  "pattern": [
+    [
+      "###__###_",
+      "#_##_#_##"
+    ]
+  ],
   "name": "2 Herb rack hooks",
-  "output": { "type": "item", "code": "alchemy:herbrackhook-{metal}", "stacksize": 1 }
+  "output": {
+    "type": "item",
+    "code": "alchemy:herbrackhook-{metal}",
+    "stacksize": 1
+  }
 }

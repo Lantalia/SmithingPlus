@@ -13,7 +13,7 @@ public class HammerTweaksNetwork : ModSystem
     private const string ChannelName = $"{Core.ModId}:{Core.HammerTweaksCategory}";
 
     /// <summary>
-    /// Always null on servers, stores the original tool modes count for the client.
+    ///     Always null on servers, stores the original tool modes count for the client.
     /// </summary>
     public static int? OriginalToolModesCount { get; set; }
 
@@ -78,7 +78,7 @@ public class HammerTweaksNetwork : ModSystem
     private static void ReceiveFlipToolMode(IServerPlayer fromPlayer, FlipToolModePacket packet)
     {
         var activeSlot = fromPlayer.InventoryManager.ActiveHotbarSlot;
-        activeSlot?.Itemstack?.TempAttributes.SetInt(ModAttributes.FlipItemToolMode, packet.ToolMode);
+        activeSlot?.Itemstack?.TempAttributes.SetInt(ModTempAttributes.FlipItemToolMode, packet.ToolMode);
     }
 
     #endregion

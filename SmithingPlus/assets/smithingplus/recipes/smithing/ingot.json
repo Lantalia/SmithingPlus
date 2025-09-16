@@ -2,16 +2,31 @@
   {
     "ingredient": {
       "type": "item",
-      "code": "game:ingot-*",
-      "recipeAttributes": { "nuggetRecipe": true },
+      "code": "game:metalbit-*",
+      "recipeAttributes": {
+        "nuggetRecipe": true
+      },
       "name": "metal",
-      "skipVariants": [ "blistersteel" ]
+      "skipVariants": [
+        "blistersteel"
+      ]
     },
     "pattern": [
-      ["#######", "#######", "#######"],
-      ["#######", "#######", "#######"]
+      [
+        "#######",
+        "#######",
+        "#######"
+      ],
+      [
+        "#######",
+        "#######",
+        "#######"
+      ]
     ],
     "name": "Ingot",
-    "output": { "type": "item", "code": "game:ingot-{metal}" }
+    "output": {
+      "type": "item",
+      "code": "game:ingot-{metal}"
+    }
   }
 ]

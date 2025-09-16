@@ -1,20 +1,43 @@
 [
   {
     "file": "game:itemtypes/part/rod.json",
-    "op": "addmerge",
+    "op": "addMerge",
     "path": "/attributes",
     "value": {
       "isPureMetal": true,
       "forgable": true,
-      "inForgeTransform": { "translation": { "x": 0, "y": 0, "z": 0.005 }, "scale": 0.95 }
+      "inForgeTransform": {
+        "translation": {
+          "x": 0,
+          "y": 0,
+          "z": 0.005
+        },
+        "scale": 0.95
+      }
     },
     "side": "Server"
   },
   {
     "file": "game:itemtypes/part/rod.json",
-    "op": "addmerge",
-    "path": "/class",
-    "value": "ItemWorkableRod",
+    "op": "addMerge",
+    "path": "/behaviors",
+    "value": [
+      {
+        "name": "smithingplus:JsonAnvilWorkable",
+        "properties": {
+          "voxels": [
+            [
+              "##########",
+              "##########"
+            ],
+            [
+              "##########",
+              "##########"
+            ]
+          ]
+        }
+      }
+    ],
     "side": "Server"
   }
 ]

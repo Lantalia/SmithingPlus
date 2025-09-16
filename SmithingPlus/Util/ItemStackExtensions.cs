@@ -12,6 +12,18 @@ public static class ItemStackExtensions
     {
         return itemStack.Collectible.GetRemainingDurability(itemStack);
     }
+    
+    internal static int? GetMaxDurability(this ItemStack itemStack)
+    {
+        return itemStack.Collectible.GetMaxDurability(itemStack);
+    }
+    
+    internal static float? GetDurabilityPercentage(this ItemStack itemStack)
+    {
+        if (itemStack.GetMaxDurability() == 0)
+            return null;
+        return itemStack.GetRemainingDurability() / itemStack.GetMaxDurability();
+    }
 
     internal static void SetDurability(this ItemStack itemStack, int number)
     {
@@ -21,29 +33,49 @@ public static class ItemStackExtensions
     internal static void CloneBrokenCount(this ItemStack itemStack, ItemStack fromStack, int extraCount = 0)
     {
         var brokenCount = fromStack.GetBrokenCount();
-        itemStack.Attributes.SetInt(ModAttributes.BrokenCount, brokenCount + extraCount);
+        itemStack.Attributes.SetInt(ModStackAttributes.BrokenCount, brokenCount + extraCount);
     }
 
     internal static void SetRepairedToolStack(this ItemStack itemStack, ItemStack fromStack)
     {
-        itemStack.Attributes.SetItemstack(ModAttributes.RepairedToolStack, fromStack);
+        itemStack.Attributes.SetItemstack(ModStackAttributes.RepairedToolStack, fromStack);
     }
 
     // Note: On server item stack needs to be resolved!
     internal static ItemStack? GetRepairedToolStack(this ItemStack itemStack)
     {
-        return itemStack.Attributes?.GetItemstack(ModAttributes.RepairedToolStack);
+        return itemStack.Attributes?.GetItemstack(ModStackAttributes.RepairedToolStack);
     }
 
-    internal static string GetRepairSmith(this ItemStack itemStack)
+    internal static string? GetRepairSmith(this ItemStack itemStack)
     {
         var repairedStack = itemStack.GetRepairedToolStack();
-        return repairedStack?.GetRepairSmith() ?? itemStack.Attributes.GetString(ModAttributes.RepairSmith);
+        return repairedStack?.GetRepairSmith() ?? itemStack.Attributes.GetString(ModStackAttributes.RepairSmith);
     }
 
     internal static void SetRepairSmith(this ItemStack itemStack, string smith)
     {
-        itemStack.Attributes.SetString(ModAttributes.RepairSmith, smith);
+        itemStack.Attributes.SetString(ModStackAttributes.RepairSmith, smith);
+    }
+
+    internal static float GetSmithingQuality(this ItemStack itemStack)
+    {
+        return itemStack.Attributes?.GetFloat(ModStackAttributes.SmithingQuality, 1) ?? 1f;
+    }
+
+    internal static void SetSmithingQuality(this ItemStack itemStack, float quality)
+    {
+        itemStack.Attributes?.SetFloat(ModStackAttributes.SmithingQuality, quality);
+    }
+
+    internal static float GetToolRepairPenaltyModifier(this ItemStack itemStack)
+    {
+        return itemStack.Attributes?.GetFloat(ModStackAttributes.ToolRepairPenaltyModifier) ?? 0f;
+    }
+
+    internal static void SetToolRepairPenaltyModifier(this ItemStack itemStack, float modifier)
+    {
+        itemStack.Attributes?.SetFloat(ModStackAttributes.ToolRepairPenaltyModifier, modifier);
     }
 
     internal static void CloneRepairedToolStackOrAttributes(this ItemStack itemStack, ItemStack fromStack,
@@ -75,7 +107,7 @@ public static class ItemStackExtensions
     internal static int GetBrokenCount(this ItemStack itemStack)
     {
         var repairedStack = itemStack.GetRepairedToolStack();
-        return repairedStack?.GetBrokenCount() ?? (itemStack.Attributes?.GetInt(ModAttributes.BrokenCount) ?? 0);
+        return repairedStack?.GetBrokenCount() ?? (itemStack.Attributes?.GetInt(ModStackAttributes.BrokenCount) ?? 0);
     }
 
     public static bool CodeMatches(this ItemStack stack, ItemStack that)
@@ -99,6 +131,17 @@ public static class ItemStackExtensions
         return smithingRecipe;
     }
 
+    public static SmithingRecipe? GetSmithingRecipe(this ItemStack toolHead, ICoreAPI api, int withOutputStackSize)
+    {
+        var smithingRecipe = api.ModLoader
+            .GetModSystem<RecipeRegistrySystem>()?
+            .SmithingRecipes?
+            .FirstOrDefault(r =>
+                r?.Output?.ResolvedItemstack?.Satisfies(toolHead) == true
+                && r.Output.ResolvedItemstack.StackSize == withOutputStackSize);
+        return smithingRecipe;
+    }
+
     // Gets the smithing recipe with the largest output stack that satisfies the tool head
     public static SmithingRecipe? GetLargestSmithingRecipe(this ItemStack toolHead, ICoreAPI api)
     {
@@ -115,24 +158,18 @@ public static class ItemStackExtensions
     // Gets a smithing recipe only if the output item stack has a single item
     public static SmithingRecipe? GetSingleSmithingRecipe(this ItemStack toolHead, ICoreAPI api)
     {
-        var smithingRecipe = api.ModLoader
-            .GetModSystem<RecipeRegistrySystem>()?
-            .SmithingRecipes?
-            .FirstOrDefault(r =>
-                r?.Output?.ResolvedItemstack?.Satisfies(toolHead) == true
-                && r.Output.ResolvedItemstack.StackSize == 1);
-        return smithingRecipe;
+        return toolHead.GetSmithingRecipe(api, 1);
     }
 
     public static float GetSplitCount(this ItemStack stack)
     {
-        var splitCount = stack.TempAttributes.GetFloat(ModAttributes.SplitCount);
+        var splitCount = stack.TempAttributes.GetFloat(ModStackAttributes.SplitCount);
         return splitCount;
     }
 
     public static void SetSplitCount(this ItemStack stack, float count)
     {
-        stack.TempAttributes.SetFloat(ModAttributes.SplitCount, count);
+        stack.TempAttributes.SetFloat(ModStackAttributes.SplitCount, count);
     }
 
     public static float GetTemperature(this ItemStack stack, IWorldAccessor world)
@@ -158,6 +195,6 @@ public static class ItemStackExtensions
 
     public static bool IsCastTool(this ItemStack stack)
     {
-        return stack.Attributes.GetBool(ModAttributes.CastTool);
+        return stack.Attributes.GetBool(ModStackAttributes.CastTool);
     }
 }

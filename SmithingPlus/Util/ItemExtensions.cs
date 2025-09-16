@@ -1,13 +1,15 @@
+#nullable enable
 using Vintagestory.API.Common;
 
 namespace SmithingPlus.Util;
 
 public static class ItemExtensions
 {
-    public static Item ItemWithVariant(this Item item, string key, string value)
+    public static Item? ItemWithVariant(this Item item, string type, string value)
     {
-        if (Core.Api != null) return Core.Api.World.GetItem(item.CodeWithVariant(key, value));
-        Core.Logger.Error("Core.Api is null, call this extension method after the mod has started");
-        return item;
-    } 
+        var api = item.GetField<ICoreAPI>("api");
+        if (api != null) return api.World.GetItem(item.CodeWithVariant(type, value));
+        Core.Logger.Error("Reflection failed to get collectible object api field");
+        return null;
+    }
 }

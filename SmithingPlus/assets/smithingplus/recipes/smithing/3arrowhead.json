@@ -2,8 +2,10 @@
   {
     "ingredient": {
       "type": "item",
-      "code": "game:ingot-*",
-      "recipeAttributes": { "nuggetRecipe": true },
+      "code": "game:metalbit-*",
+      "recipeAttributes": {
+        "nuggetRecipe": true
+      },
       "name": "metal",
       "allowedVariants": [
         "copper",
@@ -17,8 +19,19 @@
         "steel"
       ]
     },
-    "pattern": [ [ "________", "##_##_##", "#__#__#_", "________" ] ],
+    "pattern": [
+      [
+        "________",
+        "##_##_##",
+        "#__#__#_",
+        "________"
+      ]
+    ],
     "name": "3 Arrowheads",
-    "output": { "type": "item", "code": "game:arrowhead-{metal}", "stacksize": 3 }
+    "output": {
+      "type": "item",
+      "code": "game:arrowhead-{metal}",
+      "stacksize": 3
+    }
   }
 ]

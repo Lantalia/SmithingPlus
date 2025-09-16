@@ -10,7 +10,7 @@ using ItemStack = Vintagestory.API.Common.ItemStack;
 namespace SmithingPlus.SmithWithBits;
 
 [HarmonyPatch]
-[HarmonyPatchCategory(Core.SmithingBitsCategory)]
+[HarmonyPatchCategory(Core.BitSmithingCategory)]
 public class IngotNoBitRecipePatch
 {
     [HarmonyPostfix]

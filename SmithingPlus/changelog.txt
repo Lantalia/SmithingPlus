@@ -5,10 +5,18 @@
 - TODO [Minor] Bug in client tweak for anvil ingredient count. The first time the dialog is opened, the tweak doesn't get applied.
 - TODO [Minor] Auto transform for forgeable toolheads?
 
+- TODO Config rework
+- TODO [Major] Tool dismantling / tool head removal
+- TODO [Major] Fix bits output
 - TODO [MAJOR] Rework tool detection system to not use wildcard or cache it / regen it
 
-v1.7.5
-- [Fix] Config Lib config now displays separators properly
+v1.8.0-rc.1
+- [Tweak] Now metal casting requires metal amount that matches the toolhead volume (configurable)
 - [Tweak] Config Lib config now uses lang entries for hints
 - [Tweak] Do not include unnecessary field GetToolRepairForgettableAttributes in the config
-- [Fix] Chiseling work items failed
+- [Fix?] Crucible scraping chisel OnHeldInteractStop crash when chiseling items (the method should NOT run when chiseling)
+- [Fix] Config Lib config now displays separators properly
+- [Fix] Chiseling work items yielded fixed amount
+- [Fix/Compatibility] If cast tool heads had durability this would reset after repair
+	(prevalent with Toolsmith but could happen with chisels/shears)
+- [Rework] Reworked nugget/rod placement code to be much more extensible

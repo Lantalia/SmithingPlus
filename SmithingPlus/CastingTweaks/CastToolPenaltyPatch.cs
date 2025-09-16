@@ -24,7 +24,7 @@ public class CastToolPenaltyPatch
         {
             if (!stack.Collectible.HasBehavior<CollectibleBehaviorCastToolHead>()) continue;
             stack.Attributes ??= new TreeAttribute();
-            stack.Attributes.SetBool(ModAttributes.CastTool, true);
+            stack.Attributes.SetBool(ModStackAttributes.CastTool, true);
         }
     }
 
@@ -42,13 +42,13 @@ public class CastToolPenaltyPatch
             .Where(slot => !slot.Empty)
             .Select(slot => slot.Itemstack)
             .Where(stack =>
-                stack.Attributes?.GetBool(ModAttributes.CastTool) == true &&
+                stack.Attributes?.GetBool(ModStackAttributes.CastTool) == true &&
                 stack.Collectible.GetMaxDurability(stack) == 1)
             .ToArray();
         var hasCastToolHead = castToolsHeads.Any();
         if (!hasCastToolHead) return;
         outputSlot.Itemstack.Attributes ??= new TreeAttribute();
-        outputSlot.Itemstack.Attributes.SetBool(ModAttributes.CastTool, true);
+        outputSlot.Itemstack.Attributes.SetBool(ModStackAttributes.CastTool, true);
     }
 
     [HarmonyPostfix]
@@ -56,7 +56,7 @@ public class CastToolPenaltyPatch
     [HarmonyPriority(Priority.Last)]
     public static void Postfix_GetMaxDurability(ref int __result, ItemStack itemstack)
     {
-        if (itemstack.Attributes?.GetBool(ModAttributes.CastTool) != true) return;
+        if (itemstack.Attributes?.GetBool(ModStackAttributes.CastTool) != true) return;
         var reducedDurability = __result * (1 - Core.Config.CastToolDurabilityPenalty);
         __result = (int)Math.Max(reducedDurability, 1);
     }

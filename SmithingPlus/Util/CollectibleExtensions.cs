@@ -110,6 +110,34 @@ public static class CollectibleExtensions
         return gridRecipes;
     }
 
+    public static CollectibleObject? CollectibleWithVariant(this CollectibleObject collObj, string type, string value)
+    {
+        var api = collObj.GetField<ICoreAPI>("api");
+        if (api == null)
+        {
+            Core.Logger.Error("[CollectibleWithVariant] Reflection failed to get collectible object api field");
+            return null;
+        }
+
+        var codeWithVariant = collObj.CodeWithVariant(type, value);
+        switch (collObj.ItemClass)
+        {
+            case EnumItemClass.Block:
+                return api.World.GetBlock(codeWithVariant);
+            case EnumItemClass.Item:
+                return api.World.GetItem(codeWithVariant);
+            default:
+                Core.Logger.Error(
+                    $"[CollectibleWithVariant] Invalid ItemClass \"{collObj.ItemClass}\" for collectible {collObj.Code}");
+                return null;
+        }
+    }
+
+    public static T GetBehavior<T>(this CollectibleObject collObj, bool withInheritance) where T : CollectibleBehavior
+    {
+        return (T)collObj.GetCollectibleBehavior(typeof(T), withInheritance);
+    }
+
     /*
      Regex matching is slow.
      Only use when first assigning behaviors.

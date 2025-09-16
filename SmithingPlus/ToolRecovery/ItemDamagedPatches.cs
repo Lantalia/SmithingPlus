@@ -41,11 +41,11 @@ public class ItemDamagedPatches
             repairedStack.Attributes?.RemoveAttribute(attributeKey);
         var repairSmith = brokenStack.GetRepairSmith();
         if (repairSmith != null) repairedStack.SetRepairSmith(repairSmith);
-        var smithingQuality = brokenStack.Attributes.GetFloat(ModAttributes.SmithingQuality);
-        if (smithingQuality != 0) repairedStack.Attributes?.SetFloat(ModAttributes.SmithingQuality, smithingQuality);
-        var toolRepairPenaltyModifier = brokenStack.Attributes.GetFloat(ModAttributes.ToolRepairPenaltyModifier);
+        var smithingQuality = brokenStack.GetSmithingQuality();
+        if (smithingQuality != 0) repairedStack.SetSmithingQuality(smithingQuality);
+        var toolRepairPenaltyModifier = brokenStack.GetToolRepairPenaltyModifier();
         if (toolRepairPenaltyModifier != 0)
-            repairedStack.Attributes?.SetFloat(ModAttributes.ToolRepairPenaltyModifier, toolRepairPenaltyModifier);
+            repairedStack.SetToolRepairPenaltyModifier(toolRepairPenaltyModifier);
         var repairedAttributes = repairedStack.Attributes ?? new TreeAttribute();
         var outputAttributes = outputSlot.Itemstack.Attributes;
         foreach (var attribute in repairedAttributes)
@@ -137,18 +137,12 @@ public class ItemDamagedPatches
     private static byte[,,] ByteVoxelsFromRecipe(SmithingRecipe recipe, int stackSize = 1)
     {
         var recipeVoxels = recipe.Voxels;
-        var totalVoxels = recipeVoxels.VoxelCount();
-        var targetVoxelCount = (int)(totalVoxels * Core.Config.BrokenToolVoxelPercent);
-        var currentVoxelCount = totalVoxels;
-
-        var byteVoxels = recipeVoxels.ToByteArray();
-        var layer = 0;
-        while (currentVoxelCount > targetVoxelCount)
-        {
-            byteVoxels.ErodeLayer(layer, ref currentVoxelCount, targetVoxelCount);
-            layer++;
-        }
-
+        if (Core.Config.BrokenToolVoxelPercent < 0.2)
+            Core.Logger.Warning(
+                $"[ItemDamagedPatches#ByteVoxelsFromRecipe] Config setting {nameof(Core.Config.BrokenToolVoxelPercent)}" +
+                $"has a very low value, your broken tools well be almost or fully empty.");
+        ;
+        var byteVoxels = recipeVoxels.ErodeToPercentage(Core.Config.BrokenToolVoxelPercent);
         return byteVoxels;
     }
 }

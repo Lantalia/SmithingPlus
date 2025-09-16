@@ -46,7 +46,7 @@ public class ServerConfig
     public string[] GetToolRepairForgettableAttributes =>
         ToolRepairForgettableAttributes.Split(",")
             .Append("durability")
-            .Append(ModAttributes.RepairedToolStack)
-            .Append(ModAttributes.CastTool)
+            .Append(ModStackAttributes.RepairedToolStack)
+            .Append(ModStackAttributes.CastTool)
             .ToArray();
 }

@@ -50,7 +50,7 @@ public static class VoxelExtensions
         return result;
     }
 
-    public static void ErodeLayer(this byte[,,] byteVoxels, int layer, ref int currentVoxelCount, int targetVoxelCount)
+    private static void ErodeLayer(this byte[,,] byteVoxels, int layer, ref int currentVoxelCount, int targetVoxelCount)
     {
         for (var x = layer; x < byteVoxels.GetLength(0) - layer; x++)
         for (var y = layer; y < byteVoxels.GetLength(1) - layer; y++)
@@ -61,6 +61,23 @@ public static class VoxelExtensions
             currentVoxelCount--;
             if (currentVoxelCount <= targetVoxelCount) return;
         }
+    }
+    
+    public static byte[,,] ErodeToPercentage(this bool[,,] recipeVoxels, float percent)
+    {
+        var totalVoxels = recipeVoxels.VoxelCount();
+        var targetVoxelCount = (int)(totalVoxels * percent);
+        var currentVoxelCount = totalVoxels;
+
+        var byteVoxels = recipeVoxels.ToByteArray();
+        var layer = 0;
+        while (currentVoxelCount > targetVoxelCount)
+        {
+            byteVoxels.ErodeLayer(layer, ref currentVoxelCount, targetVoxelCount);
+            layer++;
+        }
+
+        return byteVoxels;
     }
 
     private static bool IsEdgeVoxel(int x, int y, int z, int layer, byte[,,] voxels)

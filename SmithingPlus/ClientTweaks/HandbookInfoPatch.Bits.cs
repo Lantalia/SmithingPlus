@@ -14,7 +14,8 @@ namespace SmithingPlus.ClientTweaks;
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public partial class HandbookInfoPatch
 {
-    [HarmonyPostfix, HarmonyPatch(typeof(CollectibleBehaviorHandbookTextAndExtraInfo), "addCreatedByInfo")]
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(CollectibleBehaviorHandbookTextAndExtraInfo), "addCreatedByInfo")]
     public static void PatchBitsInfo(
         CollectibleBehaviorHandbookTextAndExtraInfo __instance,
         ICoreClientAPI capi,
@@ -23,7 +24,8 @@ public partial class HandbookInfoPatch
         ItemStack stack,
         List<RichTextComponentBase> components)
     {
-        if (stack.Collectible is not (ItemNugget or ItemWorkableNugget)) return;
+        if (stack.Collectible is not ItemNugget ||
+            stack.Collectible.HasBehavior<CollectibleBehaviorWorkableNugget>()) return;
         Core.MaxFuelBurnTemp ??= allStacks
             .Where(s => s.Collectible.CombustibleProps?.BurnTemperature > 0)
             .OrderByDescending(s => s.Collectible.CombustibleProps.BurnTemperature)

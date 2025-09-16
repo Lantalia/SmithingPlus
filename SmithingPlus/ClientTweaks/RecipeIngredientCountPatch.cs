@@ -4,6 +4,7 @@ using System.Linq;
 using HarmonyLib;
 using JetBrains.Annotations;
 using SmithingPlus.Metal;
+using SmithingPlus.SmithWithBits;
 using SmithingPlus.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -25,7 +26,7 @@ public static class RecipeIngredientCountPatch
     {
         if (Core.Api.Side != EnumAppSide.Client) return;
         if (__instance == null || ingredient == null) return;
-        var recipes = (ingredient.Collectible as IAnvilWorkable)?.GetMatchingRecipes(ingredient);
+        var recipes = (ingredient.Collectible.GetCollectibleInterface<IAnvilWorkable>())?.GetMatchingRecipes(ingredient);
         if (recipes != null) _selectedRecipes = recipes;
     }
 
@@ -121,7 +122,7 @@ public static class RecipeIngredientCountPatch
         var onStackClickedAction = new Action<ItemStack>(cs =>
             capi.LinkProtocols["handbook"]
                 ?.DynamicInvoke(new LinkTextComponent("handbook://" + GuiHandbookItemStackPage.PageCodeForStack(cs))));
-        var allMaterialStacks = HandbookInfoPatch.GetSmithingIngredientStacks(capi,
+        var allMaterialStacks = GetSmithingIngredientStacks(capi,
             selectedRecipe.Output.ResolvedItemstack, baseMaterial, voxelCount, bitsCount, recipeId);
         var ingotStackComponents = allMaterialStacks.Select(itemStack =>
             new ItemstackTextComponent(capi, itemStack, 40, 5.0, EnumFloat.Inline, onStackClickedAction)
@@ -129,5 +130,43 @@ public static class RecipeIngredientCountPatch
         var stackComponentsText = VtmlUtil.Richtextify(capi, "", CairoFont.WhiteDetailText())
             .Concat(ingotStackComponents).ToArray();
         recipeSelector.SingleComposer.GetRichtext("ingredientCounts").SetNewText(stackComponentsText);
+    }
+
+    public static List<ItemStack> GetSmithingIngredientStacks(ICoreClientAPI capi, ItemStack stack,
+        ItemStack baseMaterial,
+        int voxelCount, int bitsCount, int recipeId)
+    {
+        var allMaterialCollectibles = capi.World.Collectibles
+            .Where(collectible =>
+                collectible is IAnvilWorkable and not ItemWorkItem &&
+                !collectible.Equals(stack.Collectible) &&
+                collectible.CombustibleProps?.SmeltedStack?.Resolve(capi.World, "worldForResolving") == true &&
+                collectible.CombustibleProps?.SmeltedStack?.ResolvedItemstack is { } smeltedStack &&
+                collectible.Satisfies(smeltedStack, baseMaterial) &&
+                ((IAnvilWorkable)collectible).GetMatchingRecipes(new ItemStack(collectible))
+                .Any(recipe => recipe.RecipeId == recipeId))
+            .OrderBy(collectible => collectible.Code.Domain == "game" ? -100 : 0)
+            .ThenByDescending(collectible => collectible.CombustibleProps?.SmeltedRatio ?? 1)
+            .ToList();
+        var allMaterialStacks = allMaterialCollectibles
+            .Select(c => new ItemStack(c, GetStackCount(c, voxelCount, bitsCount)))
+            .ToList();
+        return allMaterialStacks;
+    }
+
+    private static int GetStackCount(CollectibleObject c, int voxelCount, int bitsCount)
+    {
+        var workable = c.GetCollectibleInterface<IAnvilWorkable>();
+        return c switch
+        {
+            _ when c.HasBehavior<CollectibleBehaviorWorkableNugget>() => bitsCount,
+            _ when workable is not null => CeilDiv(voxelCount, workable.VoxelCountForHandbook(new ItemStack(c))),
+            _ => (int)Math.Ceiling(voxelCount * (c.CombustibleProps?.SmeltedRatio ?? 1.0) / 42.0)
+        };
+    }
+
+    private static int CeilDiv(int numerator, int denominator)
+    {
+        return (numerator + denominator - 1) / denominator;
     }
 }

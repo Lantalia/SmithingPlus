@@ -39,7 +39,10 @@
       "weight": 1.9,
       "comment": "smithingplus:setting-voxelsperbit-desc",
       "default": 2.1,
-      "range": { "min": 1, "max": 3 }
+      "range": {
+        "min": 2,
+        "max": 3
+      }
     },
     {
       "code": "BitsTopUp",
@@ -69,7 +72,10 @@
       "weight": 1.45,
       "comment": "smithingplus:setting-durabilitypenaltyperrepair-desc",
       "default": 0.05,
-      "range": { "min": 0, "max": 1 }
+      "range": {
+        "min": 0,
+        "max": 1
+      }
     },
     {
       "code": "ToolRepairForgettableAttributes",
@@ -86,7 +92,10 @@
       "weight": 1.35,
       "comment": "smithingplus:setting-repairabletooldurabilitymultiplier-desc",
       "default": 1,
-      "range": { "min": 0, "max": 1 }
+      "range": {
+        "min": 0,
+        "max": 1
+      }
     },
     {
       "code": "BrokenToolVoxelPercent",
@@ -95,7 +104,10 @@
       "weight": 1.3,
       "comment": "smithingplus:setting-brokentoolvoxelpercent-desc",
       "default": 0.8,
-      "range": { "min": 0, "max": 1 }
+      "range": {
+        "min": 0,
+        "max": 1
+      }
     },
     {
       "code": "RepairableToolSelector",
@@ -176,7 +188,10 @@
       "weight": 1.005,
       "comment": "smithingplus:setting-helvehammersmithingqualitymodifier-desc",
       "default": 1,
-      "range": { "min": 0.1, "max": 2 }
+      "range": {
+        "min": 0.1,
+        "max": 2
+      }
     },
     {
       "type": "separator",
@@ -219,7 +234,10 @@
       "weight": 0.78,
       "comment": "smithingplus:setting-casttooldurabilitypenalty-desc",
       "default": 0.1,
-      "range": { "min": 0, "max": 1 }
+      "range": {
+        "min": 0,
+        "max": 1
+      }
     },
     {
       "type": "separator",

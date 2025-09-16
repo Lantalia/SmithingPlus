@@ -1,38 +1,71 @@
 [
   {
     "file": "game:itemtypes/resource/nugget.json",
-    "op": "addmerge",
+    "op": "addMerge",
     "path": "/attributesByType",
     "value": {
-      "@*-(nativecopper|nativegold|nativesilver|nativeplatinum)": { "isPureMetal": true }
+      "@*-(nativecopper|nativegold|nativesilver|nativeplatinum)": {
+        "isPureMetal": true
+      }
     },
     "side": "Server",
-    "condition": { "when": "SmithingPlus_WorkableBits", "isValue": "true" }
+    "condition": {
+      "when": "SmithingPlus_WorkableBits",
+      "isValue": "true"
+    }
   },
   {
     "file": "game:itemtypes/resource/nugget.json",
-    "op": "addmerge",
-    "path": "/classByType",
+    "op": "addMerge",
+    "path": "/behaviorsByType",
+    "value": {},
+    "side": "Server",
+    "condition": {
+      "when": "SmithingPlus_WorkableBits",
+      "isValue": "true"
+    }
+  },
+  {
+    "file": "game:itemtypes/resource/nugget.json",
+    "op": "addMerge",
+    "path": "/behaviorsByType/@*-(nativecopper|nativegold|nativesilver|nativeplatinum)",
+    "value": [
+      {
+        "name": "smithingplus:WorkableNugget"
+      }
+    ],
+    "side": "Server",
+    "condition": {
+      "when": "SmithingPlus_WorkableBits",
+      "isValue": "true"
+    }
+  },
+  {
+    "file": "game:itemtypes/resource/metalbit.json",
+    "op": "addMerge",
+    "path": "/attributes",
     "value": {
-      "@*-(nativecopper|nativegold|nativesilver|nativeplatinum)": "ItemWorkableNugget"
+      "isPureMetal": true
     },
     "side": "Server",
-    "condition": { "when": "SmithingPlus_WorkableBits", "isValue": "true" }
+    "condition": {
+      "when": "SmithingPlus_WorkableBits",
+      "isValue": "true"
+    }
   },
   {
     "file": "game:itemtypes/resource/metalbit.json",
-    "op": "addmerge",
-    "path": "/attributes",
-    "value": { "isPureMetal": true },
+    "op": "addMerge",
+    "path": "/behaviors",
+    "value": [
+      {
+        "name": "smithingplus:WorkableNugget"
+      }
+    ],
     "side": "Server",
-    "condition": { "when": "SmithingPlus_WorkableBits", "isValue": "true" }
-  },
-  {
-    "file": "game:itemtypes/resource/metalbit.json",
-    "op": "replace",
-    "path": "/class",
-    "value": "ItemWorkableNugget",
-    "side": "Server",
-    "condition": { "when": "SmithingPlus_WorkableBits", "isValue": "true" }
+    "condition": {
+      "when": "SmithingPlus_WorkableBits",
+      "isValue": "true"
+    }
   }
 ]
