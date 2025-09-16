@@ -12,12 +12,12 @@ public static class ItemStackExtensions
     {
         return itemStack.Collectible.GetRemainingDurability(itemStack);
     }
-    
+
     internal static int? GetMaxDurability(this ItemStack itemStack)
     {
         return itemStack.Collectible.GetMaxDurability(itemStack);
     }
-    
+
     internal static float? GetDurabilityPercentage(this ItemStack itemStack)
     {
         if (itemStack.GetMaxDurability() == 0)
@@ -150,6 +150,19 @@ public static class ItemStackExtensions
                 .SmithingRecipes?
                 .Where(r => r?.Output?.ResolvedItemstack?.Satisfies(toolHead) == true)
                 .OrderByDescending(r => r.Output.ResolvedItemstack.StackSize)
+                .FirstOrDefault()
+            ;
+        return smithingRecipe;
+    }
+
+    // Gets the smithing recipe with the least expensive output that satisfies the tool head
+    public static SmithingRecipe? GetCheapestSmithingRecipe(this ItemStack toolHead, ICoreAPI api)
+    {
+        var smithingRecipe = api.ModLoader
+                .GetModSystem<RecipeRegistrySystem>()?
+                .SmithingRecipes?
+                .Where(r => r?.Output?.ResolvedItemstack?.Satisfies(toolHead) == true)
+                .OrderByDescending(r => r.Voxels.VoxelCount() / r.Output.ResolvedItemstack.StackSize)
                 .FirstOrDefault()
             ;
         return smithingRecipe;

@@ -48,6 +48,7 @@ public partial class Core : ModSystem
         api.RegisterCollectibleBehaviorClass($"{ModId}:ScrapeCrucible", typeof(CollectibleBehaviorScrapeCrucible));
         api.RegisterCollectibleBehaviorClass($"{ModId}:CastToolHead", typeof(CollectibleBehaviorCastToolHead));
         api.RegisterCollectibleBehaviorClass($"{ModId}:SmeltedContainer", typeof(CollectibleBehaviorSmeltedContainer));
+        api.RegisterCollectibleBehaviorClass($"{ModId}:RecycledBit", typeof(CollectibleBehaviorRecycledBit));
 
         api.RegisterEntityBehaviorClass($"{ModId}:RecyclableArrow", typeof(RecyclableArrowBehavior));
 
@@ -85,11 +86,14 @@ public partial class Core : ModSystem
                                                                      collObj is ItemChisel);
             collObj.AddBehaviorIf<CollectibleBehaviorSmeltedContainer>(Config.RecoverBitsOnSplit &&
                                                                        collObj is BlockSmeltedContainer);
+
             if (Config.MetalCastingTweaks && collObj.MatchesToolHeadSelector())
             {
                 collObj.AddBehavior<CollectibleBehaviorCastToolHead>();
                 collObj.MakeForgeable();
             }
+
+            collObj.AddBehaviorIf<CollectibleBehaviorRecycledBit>(collObj.Code.ToString().Contains("metalbit"));
 
             if ((collObj.Tool != null || (collObj.IsRepairableTool() && !collObj.MatchesToolHeadSelector())) &&
                 collObj.HasMetalMaterialSimple()) collObj.AddBehavior<CollectibleBehaviorRepairableTool>();
@@ -135,7 +139,7 @@ public partial class Core : ModSystem
         BitsRecoveryCategory.PatchIfEnabled(Config.RecoverBitsOnSplit);
         HelveHammerBitsRecoveryCategory.PatchIfEnabled(Config.HelveHammerBitsRecovery);
         CastingTweaksCategory.PatchIfEnabled(Config.MetalCastingTweaks);
-        MoldTweaksCategory.PatchIfEnabled(Config.MetalCastingTweaks);
+        DynamicMoldsCategory.PatchIfEnabled(Config.DynamicMoldUnits);
         BitSmithingCategory.PatchIfEnabled(Config.SmithWithBits || Config.BitsTopUp);
         HammerTweaksCategory.PatchIfEnabled(Config.HammerTweaks);
         //StoneSmithingCategory.PatchIfEnabled(true);

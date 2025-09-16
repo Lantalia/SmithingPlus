@@ -13,7 +13,7 @@ public partial class Core
     internal const PatchCategory BitsRecoveryCategory = "bitsRecovery";
     internal const PatchCategory HelveHammerBitsRecoveryCategory = $"{BitsRecoveryCategory}.helveHammer";
     internal const PatchCategory CastingTweaksCategory = "castingTweaks";
-    internal const PatchCategory MoldTweaksCategory = "moldTweaks";
+    internal const PatchCategory DynamicMoldsCategory = "moldTweaks";
     internal const PatchCategory HammerTweaksCategory = "hammerTweaks";
     internal const PatchCategory SkillfulSmithingCategory = "skillfulSmithing";
 

@@ -9,12 +9,8 @@
   "charattribute-sp:toolRepairPenalty--0.1": "Zwiększa kary do naprawy narzędzi o 10%",
   "charattribute-sp:smithingQuality-0.2": "Zwiększa trwałość projektów kowalskich o 20%",
   "charattribute-sp:smithingQuality--0.1": "Zmniejsza trwałość projektów kowalskich o 10%%",
-
-  "Requires any of: ": "Wymaga jednego z: ",
   "requires": "wymaga",
-
   "Mold for": "Forma do",
   "Requires for casting": "Wymagane do odlewania",
-  "Can be cast in": "Można odlać w",
-  "transform-inforge": "W kuźni"
+  "Can be cast in": "Można odlać w"
 }

@@ -240,6 +240,14 @@
       }
     },
     {
+      "code": "DynamicMoldUnits",
+      "ingui": "smithingplus:setting-dynamicmoldunits",
+      "type": "boolean",
+      "weight": 0.79,
+      "comment": "smithingplus:setting-dynamicmoldunits-desc",
+      "default": true
+    },
+    {
       "type": "separator",
       "title": "smithingplus:settingtitle-hammertweaks",
       "weight": 0.52
@@ -272,6 +280,14 @@
       "weight": 0.49,
       "comment": "smithingplus:setting-anvilshowrecipevoxels-desc",
       "default": true
+    },
+    {
+      "code": "AnvilRecipeSelectionColumns",
+      "ingui": "smithingplus:setting-anvilrecipeselectioncolumns",
+      "type": "int",
+      "weight": 0.48,
+      "comment": "smithingplus:setting-anvilrecipeselectioncolumns-desc",
+      "default": 8
     },
     {
       "code": "RememberHammerToolMode",

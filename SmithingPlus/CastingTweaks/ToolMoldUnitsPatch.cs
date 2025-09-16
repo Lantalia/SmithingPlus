@@ -8,7 +8,7 @@ using Vintagestory.GameContent;
 
 namespace SmithingPlus.CastingTweaks;
 
-[HarmonyPatchCategory(Core.MoldTweaksCategory)]
+[HarmonyPatchCategory(Core.DynamicMoldsCategory)]
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 [HarmonyPatch(typeof(BlockEntityToolMold))]
 public class ToolMoldUnitsPatch
@@ -27,9 +27,8 @@ public class ToolMoldUnitsPatch
         if (dropStacks == null || dropStacks.Length == 0)
             return; // <-- Patch will only apply for molds that work for copper!
         var voxelCount = VoxelCountForStacks(api, dropStacks);
-        const float
-            voxelsPerIngot =
-                42f; // These are all assumptions that have to be made, should implement warnings if weird values are found
+        // These are all assumptions that have to be made, should implement warnings if weird values are found
+        const float voxelsPerIngot = 42f;
         const float unitsPerIngot = 100f;
         const float unitsPerVoxel = unitsPerIngot / voxelsPerIngot;
         // Round to lowest 5 units to avoid annoying numbers and making players sad
@@ -40,8 +39,17 @@ public class ToolMoldUnitsPatch
     public static int VoxelCountForStacks(ICoreAPI api, ItemStack[] smithedItemStacks)
     {
         var smithingRecipes = smithedItemStacks.Select(stack =>
-            stack.GetSmithingRecipe(api, stack.StackSize)).Where(recipe => recipe != null).ToArray();
-        return smithingRecipes.Sum(recipe => recipe.Voxels.VoxelCount());
-        ;
+            VoxelCountForStack(api, stack)).ToArray();
+        return smithingRecipes.Sum();
+    }
+
+    private static int VoxelCountForStack(ICoreAPI api, ItemStack stack)
+    {
+        var cheapestRecipe = stack.GetCheapestSmithingRecipe(api);
+        if (cheapestRecipe == null) return 0;
+        var cheapestOutput = cheapestRecipe.Output.ResolvedItemstack.StackSize;
+        var recipeMaterialVoxels = cheapestRecipe.Voxels.VoxelCount();
+        var voxelsPerItem = Math.Max(recipeMaterialVoxels / cheapestOutput, 0);
+        return voxelsPerItem * stack.StackSize;
     }
 }

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using SmithingPlus.Util;
 using Vintagestory.API.Common;
 using Vintagestory.GameContent;
 
@@ -17,8 +18,8 @@ public class NoSmithingEstocPatch
     {
         __result = __result.Where((System.Func<SmithingRecipe, bool>)(
             r => r.Ingredient.SatisfiesAsIngredient(stack)
-                 && !(r.Ingredient.RecipeAttributes?["nuggetRecipe"]?.AsBool() ?? false)
-                 && !(r.Ingredient.RecipeAttributes?["repairOnly"]?.AsBool() ?? false)
+                 && !(r.Ingredient.RecipeAttributes?[ModRecipeAttributes.NuggetRecipe]?.AsBool() ?? false)
+                 && !(r.Ingredient.RecipeAttributes?[ModRecipeAttributes.RepairOnly]?.AsBool() ?? false)
         )).OrderBy((System.Func<SmithingRecipe, AssetLocation>)(
                 r => r.Output.ResolvedItemstack.Collectible.Code)
         ).ToList();

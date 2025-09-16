@@ -33,13 +33,14 @@ public class ServerConfig
     public string ArrowSelector { get; set; } = "@(.*):arrow-(.*)";
     public bool MetalCastingTweaks { get; set; } = true;
     public float CastToolDurabilityPenalty { get; set; } = 0.1f;
+    public bool DynamicMoldUnits { get; set; } = true;
     public bool HammerTweaks { get; set; } = true;
     public bool RotationRequiresTongs { get; set; } = false;
     public bool AnvilShowRecipeVoxels { get; set; } = true;
     public bool RememberHammerToolMode { get; set; } = true;
     public bool ShowWorkableTemperature { get; set; } = true;
-
     public bool HandbookExtraInfo { get; set; } = true;
+    public int AnvilRecipeSelectionColumns { get; set; } = 8;
 
     // public bool StoneSmithing { get; set; } = false;
     [JsonIgnore]

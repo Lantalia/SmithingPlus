@@ -13,6 +13,15 @@ namespace SmithingPlus.Util;
 #nullable enable
 public static class CollectibleExtensions
 {
+    private static readonly JToken ForgeTransformToken = JToken.FromObject(
+        new ModelTransform
+        {
+            Translation = new Vec3f(0, -0.1f, 0.35f),
+            Rotation = new Vec3f(0, 90f, 0),
+            Scale = 0.7f
+        }
+    );
+
     private static void EnsureAttributesNotNull(this CollectibleObject obj)
     {
         obj.Attributes ??= new JsonObject(new JObject());
@@ -23,13 +32,7 @@ public static class CollectibleExtensions
         collObj.EnsureAttributesNotNull();
         var token = collObj.Attributes.Token;
         token["forgable"] = true;
-        var transform = new ModelTransform
-        {
-            Translation = new Vec3f(0, -0.1f, 0.35f),
-            Rotation = new Vec3f(0, 90f, 0),
-            Scale = 0.7f
-        };
-        token["inForgeTransform"] = JToken.FromObject(transform);
+        token["inForgeTransform"] = ForgeTransformToken;
         collObj.Attributes.Token = token;
     }
 

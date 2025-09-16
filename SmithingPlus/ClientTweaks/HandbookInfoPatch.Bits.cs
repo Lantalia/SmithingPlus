@@ -25,7 +25,7 @@ public partial class HandbookInfoPatch
         List<RichTextComponentBase> components)
     {
         if (stack.Collectible is not ItemNugget ||
-            stack.Collectible.HasBehavior<CollectibleBehaviorWorkableNugget>()) return;
+            !stack.Collectible.HasBehavior<CollectibleBehaviorWorkableNugget>()) return;
         Core.MaxFuelBurnTemp ??= allStacks
             .Where(s => s.Collectible.CombustibleProps?.BurnTemperature > 0)
             .OrderByDescending(s => s.Collectible.CombustibleProps.BurnTemperature)

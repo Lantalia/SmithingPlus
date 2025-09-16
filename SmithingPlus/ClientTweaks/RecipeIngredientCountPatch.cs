@@ -1,10 +1,9 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using JetBrains.Annotations;
-using SmithingPlus.Metal;
-using SmithingPlus.SmithWithBits;
 using SmithingPlus.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -18,21 +17,23 @@ namespace SmithingPlus.ClientTweaks;
 [HarmonyPatchCategory(Core.ClientTweaksCategories.AnvilShowRecipeVoxels)]
 public static class RecipeIngredientCountPatch
 {
-    private static List<SmithingRecipe> _selectedRecipes = new();
+    private static List<SmithingRecipe> _selectedRecipes = [];
+    private static ItemStack? _selectedIngredient;
 
     [HarmonyPostfix]
     [HarmonyPatch(typeof(BlockEntityAnvil), "OpenDialog")]
-    public static void OpenDialog_Postfix(BlockEntityAnvil __instance, ItemStack ingredient)
+    public static void OpenDialog_Postfx(BlockEntityAnvil __instance, ItemStack? ingredient)
     {
-        if (Core.Api.Side != EnumAppSide.Client) return;
-        if (__instance == null || ingredient == null) return;
-        var recipes = (ingredient.Collectible.GetCollectibleInterface<IAnvilWorkable>())?.GetMatchingRecipes(ingredient);
+        if (__instance?.Api is not ICoreClientAPI) return;
+        if (ingredient != null) _selectedIngredient = ingredient;
+        var recipes = ingredient?.Collectible.GetCollectibleInterface<IAnvilWorkable>()?.GetMatchingRecipes(ingredient);
         if (recipes != null) _selectedRecipes = recipes;
     }
 
     [HarmonyPrefix]
     [HarmonyPatch(typeof(GuiDialogBlockEntityRecipeSelector), "SetupDialog")]
-    public static bool SetupDialog_Prefix(GuiDialogBlockEntityRecipeSelector __instance,
+    public static bool SetupDialog_Prefix(
+        GuiDialogBlockEntityRecipeSelector __instance,
         List<SkillItem> ___skillItems,
         int ___prevSlotOver,
         ICoreClientAPI ___capi,
@@ -41,15 +42,18 @@ public static class RecipeIngredientCountPatch
     {
         if (_selectedRecipes.Count == 0) return true;
         var cellCount = Math.Max(1, ___skillItems.Count);
-        var columns = Math.Min(cellCount, 7);
+        var columns = Math.Min(cellCount, Core.Config?.AnvilRecipeSelectionColumns ?? 8);
         var rows = (int)Math.Ceiling(cellCount / (double)columns);
         var slotSize = GuiElementPassiveItemSlot.unscaledSlotSize + GuiElementItemSlotGridBase.unscaledSlotPadding;
         var fixedWidth = Math.Max(300.0, columns * slotSize);
         var gridBounds = ElementBounds.Fixed(0.0, 30.0, fixedWidth, rows * slotSize);
         var nameBounds = ElementBounds.Fixed(0.0, rows * slotSize + 50.0, fixedWidth, 33.0);
         var descBounds = nameBounds.BelowCopy(fixedDeltaY: 10.0);
-        var ingredientDescBounds = descBounds.BelowCopy();
-        var richTextBounds = ingredientDescBounds.BelowCopy(fixedDeltaY: -10).WithFixedPadding(0, 20);
+        var ingredientDescBounds = descBounds.BelowCopy().WithFixedWidth(descBounds.fixedWidth * 0.5);
+        var richTextBounds = ingredientDescBounds.RightCopy()
+            .WithAlignment(EnumDialogArea.RightFixed)
+            .WithFixedOffset(-50, -20)
+            .WithFixedPadding(0, 10);
         var dialogBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
         dialogBounds.BothSizing = ElementSizing.FitToChildren;
 
@@ -104,62 +108,59 @@ public static class RecipeIngredientCountPatch
             return;
         var selectedRecipe = _selectedRecipes[num];
         var recipeId = selectedRecipe.RecipeId;
-        var voxelCount = CacheHelper.GetOrAdd(Core.RecipeVoxelCountCache, recipeId,
-            () => capi.GetSmithingRecipes().Find(recipe => recipe.RecipeId == recipeId).Voxels.VoxelCount());
-        var baseMaterial = selectedRecipe.Output.ResolvedItemstack.GetOrCacheMetalMaterial(capi)?.IngotStack;
+        var outputStack = selectedRecipe.Output.ResolvedItemstack;
         var currentSkillItem = skillItems[num];
         recipeSelector.SingleComposer.GetDynamicText("name").SetNewText(currentSkillItem.Name);
         recipeSelector.SingleComposer.GetDynamicText("desc").SetNewText(currentSkillItem.Description);
-        recipeSelector.SingleComposer.GetDynamicText("ingredientDesc").SetNewText(Lang.Get("Requires any of: "));
-        if (baseMaterial == null)
+        var materialStack = GetSmithingIngredientStack(capi, selectedRecipe.Output.ResolvedItemstack, recipeId);
+        if (outputStack == null || _selectedIngredient == null || materialStack == null)
         {
+            var text = "";
+            if (skillItems[num].Data is ItemStack[] data)
+                text = Lang.Get("recipeselector-requiredcount", data[0].StackSize, data[0].GetName().ToLower());
+            recipeSelector.SingleComposer.GetDynamicText("ingredientDesc").SetNewText(text);
             recipeSelector.SingleComposer.GetRichtext("ingredientCounts")
                 .SetNewText([]);
             return;
         }
 
-        var bitsCount = (int)Math.Ceiling(voxelCount / Core.Config.VoxelsPerBit);
+        recipeSelector.SingleComposer.GetDynamicText("ingredientDesc")
+            .SetNewText(Lang.Get("recipeselector-requiredcount", materialStack.StackSize,
+                materialStack.GetName().ToLower()));
+
         var onStackClickedAction = new Action<ItemStack>(cs =>
             capi.LinkProtocols["handbook"]
                 ?.DynamicInvoke(new LinkTextComponent("handbook://" + GuiHandbookItemStackPage.PageCodeForStack(cs))));
-        var allMaterialStacks = GetSmithingIngredientStacks(capi,
-            selectedRecipe.Output.ResolvedItemstack, baseMaterial, voxelCount, bitsCount, recipeId);
-        var ingotStackComponents = allMaterialStacks.Select(itemStack =>
-            new ItemstackTextComponent(capi, itemStack, 40, 5.0, EnumFloat.Inline, onStackClickedAction)
-                { ShowStacksize = true });
+
+        var ingotStackComponent =
+            new ItemstackTextComponent(capi, materialStack, 50, 5.0, EnumFloat.Inline, onStackClickedAction)
+                { ShowStacksize = true };
         var stackComponentsText = VtmlUtil.Richtextify(capi, "", CairoFont.WhiteDetailText())
-            .Concat(ingotStackComponents).ToArray();
+            .AddToArray(ingotStackComponent).ToArray();
         recipeSelector.SingleComposer.GetRichtext("ingredientCounts").SetNewText(stackComponentsText);
     }
 
-    public static List<ItemStack> GetSmithingIngredientStacks(ICoreClientAPI capi, ItemStack stack,
-        ItemStack baseMaterial,
-        int voxelCount, int bitsCount, int recipeId)
+    public static ItemStack? GetSmithingIngredientStack(
+        ICoreClientAPI capi,
+        ItemStack stack,
+        int recipeId)
     {
-        var allMaterialCollectibles = capi.World.Collectibles
-            .Where(collectible =>
-                collectible is IAnvilWorkable and not ItemWorkItem &&
-                !collectible.Equals(stack.Collectible) &&
-                collectible.CombustibleProps?.SmeltedStack?.Resolve(capi.World, "worldForResolving") == true &&
-                collectible.CombustibleProps?.SmeltedStack?.ResolvedItemstack is { } smeltedStack &&
-                collectible.Satisfies(smeltedStack, baseMaterial) &&
-                ((IAnvilWorkable)collectible).GetMatchingRecipes(new ItemStack(collectible))
-                .Any(recipe => recipe.RecipeId == recipeId))
-            .OrderBy(collectible => collectible.Code.Domain == "game" ? -100 : 0)
-            .ThenByDescending(collectible => collectible.CombustibleProps?.SmeltedRatio ?? 1)
-            .ToList();
-        var allMaterialStacks = allMaterialCollectibles
-            .Select(c => new ItemStack(c, GetStackCount(c, voxelCount, bitsCount)))
-            .ToList();
-        return allMaterialStacks;
+        if (_selectedIngredient == null)
+            return null;
+        var voxelCount = CacheHelper.GetOrAdd(Core.RecipeVoxelCountCache, recipeId,
+            () => capi.GetSmithingRecipes().Find(recipe => recipe.RecipeId == recipeId)?.Voxels.VoxelCount() ?? 0);
+        var stackSize = GetStackCount(_selectedIngredient.Collectible, voxelCount);
+        var adjustedIngredient = _selectedIngredient.Clone();
+        adjustedIngredient.SetTemperature(capi.World, 0);
+        adjustedIngredient.StackSize = stackSize;
+        return adjustedIngredient;
     }
 
-    private static int GetStackCount(CollectibleObject c, int voxelCount, int bitsCount)
+    private static int GetStackCount(CollectibleObject c, int voxelCount)
     {
         var workable = c.GetCollectibleInterface<IAnvilWorkable>();
         return c switch
         {
-            _ when c.HasBehavior<CollectibleBehaviorWorkableNugget>() => bitsCount,
             _ when workable is not null => CeilDiv(voxelCount, workable.VoxelCountForHandbook(new ItemStack(c))),
             _ => (int)Math.Ceiling(voxelCount * (c.CombustibleProps?.SmeltedRatio ?? 1.0) / 42.0)
         };
