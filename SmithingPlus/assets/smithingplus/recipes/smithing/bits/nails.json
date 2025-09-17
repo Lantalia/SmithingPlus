@@ -1,8 +1,9 @@
 [
   {
+    // Hijacked by anvil workable behavior, ingot ingredient is not used directly
     "ingredient": {
       "type": "item",
-      "code": "game:metalbit-*",
+      "code": "game:ingot-*",
       "recipeAttributes": {
         "nuggetRecipe": true
       },
@@ -21,17 +22,18 @@
     },
     "pattern": [
       [
-        "________",
-        "##_##_##",
-        "#__#__#_",
-        "________"
+        "___##___",
+        "___##___",
+        "___##___",
+        "___##___",
+        "___##___"
       ]
     ],
-    "name": "3 Arrowheads",
+    "name": "1 set of nails",
     "output": {
       "type": "item",
-      "code": "game:arrowhead-{metal}",
-      "stacksize": 3
+      "code": "game:metalnailsandstrips-{metal}",
+      "stacksize": 1
     }
   }
 ]

@@ -16,7 +16,9 @@ public abstract class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj
 {
     protected ICoreAPI? Api => collObj.GetField<ICoreAPI>("api");
     protected abstract byte[,,] Voxels { get; }
-    protected MetalMaterial? MetalMaterial => Api != null ? collObj.GetOrCacheMetalMaterial(Api) : null;
+
+    protected MetalMaterial? MetalMaterial =>
+        Api != null ? MetalMaterialLoader.GetMaterial(Api, collObj.GetMetalVariant()) ?? collObj.GetMetalMaterialSmelted(Api) : null;
 
     protected virtual AnvilPlacementMode PlacementMode { get; set; } = AnvilPlacementMode.Normal;
 
@@ -83,9 +85,12 @@ public abstract class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj
     {
         return Api.GetSmithingRecipes()
             .Where(r =>
-                r.Ingredient.SatisfiesAsIngredient(MetalMaterial?.IngotStack ?? stack) &&
-                !r.Output.ResolvedItemstack.Collectible.Code.Equals(collObj.Code))
-            .OrderBy(r => r.Output.ResolvedItemstack.Collectible.Code)
+                ((MetalMaterial?.IngotStack is { } baseMetal && r.Ingredient.SatisfiesAsIngredient(baseMetal))
+                 || r.Ingredient.SatisfiesAsIngredient(stack))
+                && !r.Output.ResolvedItemstack.Collectible.Code.Equals(collObj.Code))
+            .OrderBy(r=> r.Output.ResolvedItemstack.Collectible.Code)
+            .ThenBy(r=> r.Output.ResolvedItemstack.StackSize)
+            .DistinctBy(r=> r.Output.ResolvedItemstack.Collectible)
             .ToList();
     }
 

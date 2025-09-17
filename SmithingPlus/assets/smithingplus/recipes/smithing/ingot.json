@@ -1,15 +1,13 @@
 [
   {
+    // Ingot to itself, used to add ingot recipes to anvil workables with code
     "ingredient": {
       "type": "item",
-      "code": "game:metalbit-*",
-      "recipeAttributes": {
-        "nuggetRecipe": true
-      },
+      "code": "game:ingot-copper",
       "name": "metal",
-      "skipVariants": [
-        "blistersteel"
-      ]
+      "recipeAttributes": {
+        "workableRecipe": true
+      }
     },
     "pattern": [
       [
@@ -26,7 +24,7 @@
     "name": "Ingot",
     "output": {
       "type": "item",
-      "code": "game:ingot-{metal}"
+      "code": "game:ingot-copper"
     }
   }
 ]

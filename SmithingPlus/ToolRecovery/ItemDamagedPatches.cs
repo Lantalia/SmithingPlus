@@ -116,10 +116,10 @@ public class ItemDamagedPatches
 
     private static ItemStack GetToolHead(ICoreAPI api, ItemStack itemStack)
     {
-        var toolRecipe = itemStack.Collectible
+        var toolRecipe = itemStack
             .GetGridRecipes(api)
             .FirstOrDefault(r =>
-                r.Output.ResolvedItemstack.StackSize == 1);
+                r.Output?.ResolvedItemstack?.StackSize == 1);
         var toolHead = toolRecipe?.resolvedIngredients
             .FirstOrDefault(k =>
                 k?.ResolvedItemstack?.Collectible?.HasBehavior<CollectibleBehaviorRepairableToolHead>() ?? false)

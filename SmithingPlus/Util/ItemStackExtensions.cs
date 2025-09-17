@@ -1,4 +1,5 @@
 #nullable enable
+using System.Collections.Generic;
 using System.Linq;
 using Vintagestory.API.Common;
 using Vintagestory.API.Datastructures;
@@ -166,6 +167,15 @@ public static class ItemStackExtensions
                 .FirstOrDefault()
             ;
         return smithingRecipe;
+    }
+
+    public static IEnumerable<GridRecipe> GetGridRecipes(this ItemStack itemStack, ICoreAPI api)
+    {
+        var gridRecipes =
+            from recipe in api.World.GridRecipes
+            where recipe.Output?.ResolvedItemstack?.Satisfies(itemStack) == true
+            select recipe;
+        return gridRecipes;
     }
 
     // Gets a smithing recipe only if the output item stack has a single item

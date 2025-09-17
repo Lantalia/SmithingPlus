@@ -2,22 +2,18 @@
 - TODO Store overall transform for flip tool mode to properly reconstruct recipe outline rotation.
     Current method can have bugs and is harder to maintain.
 - TODO [Minor] Auto transform for forgeable toolheads?
-- TODO [Insignificant] Bug in client tweak for anvil ingredient count. The first time the dialog was opened, the tweak wouldn't get applied.
+- TODO [Insignificant but annoying] Bug in client tweak for anvil ingredient count.
+	The first time the dialog was opened, the tweak wouldn't get applied.
+	Using a prefix instead of a postfix won't work.
 - TODO [Major] Config rework
 	- TODO [Tweak] Config option to disable iron bloom modifications from helve hammers
 - TODO [Major] Tool dismantling / tool head removal
 - TODO [MAJOR] Rework tool detection system to not use wildcard or cache it / regen it
 - TODO [Fix] Fix nugget recipes etc with better system
 
-v1.8.0-rc.1
-- [Tweak] Now metal casting requires metal amount that matches the tool head volume (configurable)
-- [Tweak] Config Lib config now uses lang entries for hints
-- [Tweak] Do not include unnecessary field GetToolRepairForgettableAttributes in the config
-- [Tweak] Now cap on recycled bits supports multi-ingredient and multi-tool recipes for whatever masochistic reason 
-- [Tweak] Anvil recipe selection doesn't display all ingredients anymore, just necessary quantity of current ingredient.
-- [Fix?] Crucible scraping chisel OnHeldInteractStop crash when chiseling items (the method should NOT run when chiseling)
-- [Fix] Config Lib config now displays separators properly
-- [Fix] Chiseling work items yielded fixed amount of 20 bits
-- [Fix/Compatibility] If cast tool heads had durability this would reset after repair
-	(prevalent with Toolsmith but could happen with chisels/shears)
-- [Rework] Reworked nugget/rod placement code to be much more extensible
+v1.8.0-rc.3
+- [Tweak/Compatibility] Patch *all* IAnvilWorkable (instead of just ingots) to not allow estoc blade smithing and nugget recipes
+	since 1.21 changes make it much more likely for mods to have them.
+- [Fix] Can smith rods from bits
+- [Fix] Fix molds of non-smithed metal items having zero units
+- [Fix] Crash from tools breaking for some people

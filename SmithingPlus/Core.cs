@@ -101,10 +101,15 @@ public partial class Core : ModSystem
             else if (WildcardUtil.Match(Config.WorkItemSelector, collObj.Code.ToString()))
                 collObj.AddBehavior<CollectibleBehaviorBrokenToolHead>();
 
-            // Adds metalbit-only smithing recipes to make ingots. This is a bit hacky as metalbit crafting uses the original
-            // ingot recipes, so to have these recipes be present we need ingot -> ingot recipes. These won't show up when smithing with
-            // ingots, however, since the original ingot recipe (in the smithingplus domain) has "recipeAttributes": { "nuggetRecipe": true }
-            // A better solution would be to define the recipe with code instead of cloning an ingot recipe defined in the assets
+            // Adds workable-only smithing recipes to make ingots.
+            // This is a bit hacky as workable crafting uses the original
+            // ingot recipes, so to have these recipes be present we need ingot -> ingot recipes.
+            // These won't show up when smithing with
+            // ingots, however,
+            // since the original ingot recipe (in the smithingplus domain) has "recipeAttributes":
+            // { "workableRecipe": true }
+            // A better solution would be
+            // to define the recipe with code instead of cloning an ingot recipe defined in the assets
             if (api.Side.IsClient()) return;
             var ingotCode = new AssetLocation("game:ingot-copper");
             var ingotRecipe = api.ModLoader.GetModSystem<RecipeRegistrySystem>().SmithingRecipes
@@ -116,9 +121,10 @@ public partial class Core : ModSystem
             if (api.ModLoader.GetModSystem<RecipeRegistrySystem>().SmithingRecipes
                 .Any(r => r.Ingredient.Code.Equals(collObj.Code) &&
                           r.Output.ResolvedItemstack.Collectible.Code.Equals(collObj.Code))) continue;
-            Logger.VerboseDebug($"Adding Metalbit-only recipes to {collObj.Code}");
+            Logger.VerboseDebug($"Adding workable-only ingot recipe for {collObj.Code}");
             var newRecipe = ingotRecipe.Clone();
             newRecipe.Ingredient.Code = collObj.Code;
+            newRecipe.Ingredient.Resolve(api.World, $"[{ModId}] add ingot smithing recipe");
             newRecipe.Output.Code = collObj.Code;
             newRecipe.Output.Resolve(api.World, $"[{ModId}] add ingot smithing recipe");
             api.ModLoader.GetModSystem<RecipeRegistrySystem>().SmithingRecipes.Add(newRecipe);
@@ -132,6 +138,7 @@ public partial class Core : ModSystem
         Logger.VerboseDebug("Patching...");
         AlwaysPatchCategory.PatchIfEnabled(true);
         ToolRecoveryCategory.PatchIfEnabled(Config.EnableToolRecovery);
+        SmithingRecipeAttributesPatch.PatchIfEnabled(Config.SmithWithBits || Config.BitsTopUp || Config.EnableToolRecovery, HarmonyInstance);
         ClientTweaksCategories.RememberHammerToolMode.PatchIfEnabled(Config.RememberHammerToolMode);
         ClientTweaksCategories.AnvilShowRecipeVoxels.PatchIfEnabled(Config.AnvilShowRecipeVoxels);
         ClientTweaksCategories.ShowWorkablePatches.PatchIfEnabled(Config.ShowWorkableTemperature);

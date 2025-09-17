@@ -98,6 +98,12 @@ public static class MetalMaterialExtensions
             out metalMaterial);
     }
 
+    public static MetalMaterial? GetMetalMaterialSmelted(this CollectibleObject collectibleObject, ICoreAPI api)
+    {
+        var variantCode = collectibleObject?.CombustibleProps?.SmeltedStack?.ResolvedItemstack.Collectible.GetMetalVariant();
+        return MetalMaterialLoader.GetMaterial(api, variantCode);;
+    }
+
     // Use when what matters is the processed result (e.g., iron bloom > iron, blister steel > steel)
     private static MetalMaterial? GetMetalMaterialProcessed(this CollectibleObject collectibleObject, ICoreAPI api)
     {

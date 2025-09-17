@@ -80,15 +80,6 @@ public static class CollectibleExtensions
         return smithingRecipe;
     }
 
-    public static IEnumerable<GridRecipe> GetGridRecipes(this CollectibleObject collObj, ICoreAPI api)
-    {
-        var gridRecipes =
-            from recipe in api.World.GridRecipes
-            where recipe.Output.ResolvedItemstack.Collectible.Code.Equals(collObj.Code)
-            select recipe;
-        return gridRecipes;
-    }
-
     public static IEnumerable<SmithingRecipe> GetSmithingRecipesAsIngredient(this CollectibleObject collObj,
         ICoreAPI api)
     {
