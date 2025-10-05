@@ -13,6 +13,7 @@ using SmithingPlus.ToolRecovery;
 using SmithingPlus.Util;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
+using Vintagestory.API.Datastructures;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
@@ -122,10 +123,26 @@ public partial class Core : ModSystem
                 .Any(r => r.Ingredient.Code.Equals(collObj.Code) &&
                           r.Output.ResolvedItemstack.Collectible.Code.Equals(collObj.Code))) continue;
             Logger.VerboseDebug($"Adding workable-only ingot recipe for {collObj.Code}");
-            var newRecipe = ingotRecipe.Clone();
-            newRecipe.Ingredient.Code = collObj.Code;
+            var newRecipe = new SmithingRecipe
+            {
+                Name = ingotRecipe.Name,
+                Pattern = ingotRecipe.Pattern,
+                Voxels = ingotRecipe.Voxels,
+                Ingredient = new CraftingRecipeIngredient
+                {
+                    Type = collObj.ItemClass,
+                    Code = collObj.Code,
+                    RecipeAttributes = new JsonObject($"{{{ModRecipeAttributes.WorkableRecipe}: true}}")
+                },
+                Output = new JsonItemStack
+                {
+                    Type = collObj.ItemClass,
+                    Code = collObj.Code,
+                    StackSize = 1
+                },
+                RecipeId = api.ModLoader.GetModSystem<RecipeRegistrySystem>().SmithingRecipes.Count + 1
+            };
             newRecipe.Ingredient.Resolve(api.World, $"[{ModId}] add ingot smithing recipe");
-            newRecipe.Output.Code = collObj.Code;
             newRecipe.Output.Resolve(api.World, $"[{ModId}] add ingot smithing recipe");
             api.ModLoader.GetModSystem<RecipeRegistrySystem>().SmithingRecipes.Add(newRecipe);
         }
@@ -138,7 +155,8 @@ public partial class Core : ModSystem
         Logger.VerboseDebug("Patching...");
         AlwaysPatchCategory.PatchIfEnabled(true);
         ToolRecoveryCategory.PatchIfEnabled(Config.EnableToolRecovery);
-        SmithingRecipeAttributesPatch.PatchIfEnabled(Config.SmithWithBits || Config.BitsTopUp || Config.EnableToolRecovery, HarmonyInstance);
+        SmithingRecipeAttributesPatch.PatchIfEnabled(
+            Config.SmithWithBits || Config.BitsTopUp || Config.EnableToolRecovery, HarmonyInstance);
         ClientTweaksCategories.RememberHammerToolMode.PatchIfEnabled(Config.RememberHammerToolMode);
         ClientTweaksCategories.AnvilShowRecipeVoxels.PatchIfEnabled(Config.AnvilShowRecipeVoxels);
         ClientTweaksCategories.ShowWorkablePatches.PatchIfEnabled(Config.ShowWorkableTemperature);

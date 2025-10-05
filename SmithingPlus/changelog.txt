@@ -4,16 +4,16 @@
 - TODO [Minor] Auto transform for forgeable toolheads?
 - TODO [Insignificant but annoying] Bug in client tweak for anvil ingredient count.
 	The first time the dialog was opened, the tweak wouldn't get applied.
-	Using a prefix instead of a postfix won't work.
+	Using a prefix instead of a postfix won't work. (Check dana tweaks?)
 - TODO [Major] Config rework
 	- TODO [Tweak] Config option to disable iron bloom modifications from helve hammers
 - TODO [Major] Tool dismantling / tool head removal
 - TODO [MAJOR] Rework tool detection system to not use wildcard or cache it / regen it
 - TODO [Fix] Fix nugget recipes etc with better system
 
-v1.8.0-rc.3
-- [Tweak/Compatibility] Patch *all* IAnvilWorkable (instead of just ingots) to not allow estoc blade smithing and nugget recipes
-	since 1.21 changes make it much more likely for mods to have them.
-- [Fix] Can smith rods from bits
-- [Fix] Fix molds of non-smithed metal items having zero units
-- [Fix] Crash from tools breaking for some people
+v1.8.0
+- [Fixed] Chiseling dupe (the last hopefully)
+- [Fixed] Some missing recipes when smithing with bits (would include only one recipe per output type)
+- [Fixed] Smithing ingots with bits would always give copper
+- [Fixed] Handbook page for molds would show 20 bits required even with DynamicMoldUnits turned on
+- [Tweak] DynamicMoldUnits is off by default now, will probably make all future new features off by default, I guess

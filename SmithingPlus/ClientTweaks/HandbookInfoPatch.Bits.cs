@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using JetBrains.Annotations;
+using SmithingPlus.CastingTweaks;
 using SmithingPlus.SmithWithBits;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -53,10 +54,10 @@ public partial class HandbookInfoPatch
         {
             var stacksInGroup = group.ToArray();
             Array.ForEach(stacksInGroup, s =>
-                s.StackSize = s.ItemAttributes["requiredUnits"].AsInt());
+                s.StackSize = ToolMoldUnitsPatch.GetPatchedRequiredUnits(capi, s.Block, stack));
             var moldsSlideshow = new SlideshowItemstackTextComponent(capi, stacksInGroup, 40, EnumFloat.Inline,
                     cs => openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs)))
-                { PaddingLeft = 2 };
+                { PaddingLeft = 2, ShowStackSize = true };
             components.Add(moldsSlideshow);
         }
     }

@@ -245,7 +245,7 @@
       "type": "boolean",
       "weight": 0.79,
       "comment": "smithingplus:setting-dynamicmoldunits-desc",
-      "default": true
+      "default": false
     },
     {
       "type": "separator",

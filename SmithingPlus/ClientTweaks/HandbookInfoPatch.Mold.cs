@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using SmithingPlus.CastingTweaks;
 using SmithingPlus.Util;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -14,7 +15,6 @@ namespace SmithingPlus.ClientTweaks;
 
 public partial class HandbookInfoPatch
 {
-
     [HarmonyPostfix]
     [HarmonyPatch(typeof(CollectibleBehaviorHandbookTextAndExtraInfo), "addCreatedByInfo")]
     public static void PatchFromMoldInfo(
@@ -39,10 +39,7 @@ public partial class HandbookInfoPatch
         AddSubHeading(components, capi, openDetailPageFor,
             $"{Lang.Get("Metal molding")} {Lang.Get("requires")}",
             "craftinginfo-smelting");
-        var slideshowMolds = new SlideshowItemstackTextComponent(capi, moldStacks.ToArray(), 40, EnumFloat.Inline,
-                cs => openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs)))
-            { PaddingLeft = 2 };
-        components.Add(slideshowMolds);
+        AddAlignedSlideshows(capi, openDetailPageFor, components, moldStacks.ToList());
     }
 
     [HarmonyPostfix]
@@ -61,61 +58,75 @@ public partial class HandbookInfoPatch
             .OrderByDescending(s => s.Collectible.CombustibleProps.BurnTemperature)
             .FirstOrDefault()?.Collectible.CombustibleProps?.BurnTemperature ?? 0;
 
+        // This is a hack, should refactor this to use per-metal required units in the future
+        var copperIngot = capi.World.GetItem(new AssetLocation("game:ingot-copper"));
+        if (copperIngot == null)
+            return;
+        var copperStack = new ItemStack(copperIngot);
+
         var mold = stack.Collectible;
-        var requiredUnits = mold.Attributes["requiredUnits"].AsInt();
-        mold.Attributes["drop"].AsObject(new JsonItemStack(), mold.Code.Domain);
+        int requiredUnits;
+        if (mold is Block moldBlock && Core.Config.DynamicMoldUnits)
+            requiredUnits = ToolMoldUnitsPatch.GetPatchedRequiredUnits(capi, moldBlock, copperStack);
+        else requiredUnits = mold.Attributes["requiredUnits"].AsInt(100);
+
         var castStacks = StacksFromCode(capi, stack, out var existingMetalVariants);
         // Use linq search to find all metal bit stacks
         var metalBitStacks =
             Core.MetalBitStacksCache ??=
                 allStacks.Where(s =>
-                s.Collectible.Code.Path.Contains("metalbit") &&
-                Enumerable.Contains(existingMetalVariants, s.Collectible.LastCodePart()) &&
-                s.Collectible.CombustibleProps?.SmeltedStack?.ResolvedItemstack != null &&
-                s.Collectible.CombustibleProps.SmeltingType == EnumSmeltType.Smelt &&
-                s.Collectible.CombustibleProps.MeltingPoint <= Core.MaxFuelBurnTemp
-        ).ToArray();
+                    s.Collectible.Code.Path.Contains("metalbit") &&
+                    Enumerable.Contains(existingMetalVariants, s.Collectible.LastCodePart()) &&
+                    s.Collectible.CombustibleProps?.SmeltedStack?.ResolvedItemstack != null &&
+                    s.Collectible.CombustibleProps.SmeltingType == EnumSmeltType.Smelt &&
+                    s.Collectible.CombustibleProps.MeltingPoint <= Core.MaxFuelBurnTemp
+                ).ToArray();
         var castableMetalVariants =
             Core.CastableMetalVariantsCache ??=
                 metalBitStacks.Select(s => s.Collectible.Variant["metal"]).ToArray();
-        
-        castStacks = castStacks.Where(s => castableMetalVariants.Contains(s.Collectible.LastCodePart())).ToArray();
+
+        var castStackList = castStacks.Where(s => castableMetalVariants.Contains(s.Collectible.LastCodePart()))
+            .ToList();
 
         var haveText = components.Count > 0;
-        if (castStacks.Length > 0)
+        if (castStackList.Count > 0)
         {
             AddHeading(components, capi, "Mold for", ref haveText);
-            var slideshowStack = new SlideshowItemstackTextComponent(capi, castStacks, 40, EnumFloat.Inline,
-                    cs => openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs)))
-                { PaddingLeft = 2 };
-            components.Add(slideshowStack);
+            AddAlignedSlideshows(capi, openDetailPageFor, components, castStackList);
         }
-
 
         if (metalBitStacks.Length <= 0) return;
         {
             AddHeading(components, capi, "Requires for casting", ref haveText);
-            // Group by everything except the last code part
-            var groupedStacks = metalBitStacks
-                .GroupBy(s =>
-                {
-                    var code = s.Collectible.Code;
-                    return $"{code.Domain}:{string.Join("-", code.Path.Split('-').SkipLast(1))}";
-                })
-                .ToArray();
+            Array.ForEach(metalBitStacks, s =>
+                s.StackSize =
+                    (int)Math.Ceiling(requiredUnits /
+                                      (100f / (s.Collectible.CombustibleProps?.SmeltedRatio ?? 5))));
+            AddAlignedSlideshows(capi, openDetailPageFor, components, metalBitStacks.ToList());
+        }
+    }
 
-            foreach (var group in groupedStacks)
+    private static void AddAlignedSlideshows(
+        ICoreClientAPI capi,
+        ActionConsumable<string> openDetailPageFor,
+        List<RichTextComponentBase> components,
+        List<ItemStack> stacks)
+    {
+        var firstPadding = 10;
+        while (stacks.Count > 0)
+        {
+            var dstack = stacks[0];
+            stacks.RemoveAt(0);
+
+            var slideshowStack = new SlideshowItemstackTextComponent(
+                capi, dstack, stacks, 40, EnumFloat.Inline,
+                cs => openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs)))
             {
-                var stacksInGroup = group.ToArray();
-                Array.ForEach(stacksInGroup, s =>
-                    s.StackSize =
-                        (int)Math.Ceiling(requiredUnits /
-                                          (100f / (s.Collectible.CombustibleProps?.SmeltedRatio ?? 5))));
-                var slideshowMetalBits = new SlideshowItemstackTextComponent(capi, stacksInGroup, 40, EnumFloat.Inline,
-                        cs => openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs)))
-                    { ShowStackSize = true, PaddingLeft = 2 };
-                components.Add(slideshowMetalBits);
-            }
+                ShowStackSize = true,
+                PaddingLeft = firstPadding
+            };
+            firstPadding = 0;
+            components.Add(slideshowStack);
         }
     }
 }

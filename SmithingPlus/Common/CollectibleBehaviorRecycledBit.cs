@@ -18,10 +18,13 @@ public class CollectibleBehaviorRecycledBit(CollectibleObject collObj) : Collect
         ref EnumHandling bhHandling)
     {
         base.OnCreatedByCrafting(allInputslots, outputSlot, byRecipe, ref bhHandling);
-        if (outputSlot?.Itemstack == null || allInputslots == null || byRecipe == null) return;
+        if (outputSlot?.Itemstack == null ||
+            allInputslots == null ||
+            byRecipe?.resolvedIngredients == null)
+            return;
 
         // Identify recipe tools from ingredients
-        var toolIngredients = byRecipe.resolvedIngredients?
+        var toolIngredients = byRecipe.resolvedIngredients
             .Where(ing =>
                 ing is { IsTool: true } ||
                 ing?.RecipeAttributes?[ModRecipeAttributes.RecyclingRecipe]?.AsBool() == true)
@@ -34,7 +37,6 @@ public class CollectibleBehaviorRecycledBit(CollectibleObject collObj) : Collect
             .ToList();
 
         if (metalInputSlots.Count == 0) return;
-
         var totalVoxels = 0L;
         // To calculate weighted temperature average by voxels
         var temperatureAccumulator = 0f;
@@ -62,7 +64,18 @@ public class CollectibleBehaviorRecycledBit(CollectibleObject collObj) : Collect
                     var cheapestOutput = Math.Max(cheapestRecipe.Output.ResolvedItemstack.StackSize, 1);
                     var recipeMaterialVoxels = cheapestRecipe.Voxels.VoxelCount();
                     var voxelsPerItem = Math.Max(recipeMaterialVoxels / cheapestOutput, 0);
-                    voxelsForThisStack = voxelsPerItem * stack.StackSize;
+
+                    var consumedStackSize =
+                        0; // Use this NOT stack.StackSize because that could have more items than the recipe requires
+                    foreach (var ingredient in byRecipe.resolvedIngredients)
+                    {
+                        if (!ingredient.SatisfiesAsIngredient(stack))
+                            continue;
+                        consumedStackSize = ingredient.ResolvedItemstack.StackSize;
+                        break;
+                    }
+
+                    voxelsForThisStack = voxelsPerItem * consumedStackSize;
                 }
             }
 

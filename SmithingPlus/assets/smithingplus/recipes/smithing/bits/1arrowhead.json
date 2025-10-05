@@ -3,7 +3,7 @@
     // Hijacked by anvil workable behavior, ingot ingredient is not used directly
     "ingredient": {
       "type": "item",
-      "code": "game:metalbit-*",
+      "code": "game:ingot-*",
       "recipeAttributes": {
         "nuggetRecipe": true
       },

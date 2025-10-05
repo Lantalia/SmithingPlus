@@ -92,9 +92,7 @@ public static class BlockEntityAnvilPatch
 
         if (rotationAxis != null)
         {
-            var rotationValue = __instance.WorkItemStack.GetHorizontalRotation(rotationAxis.Value);
-            __instance.Api.Logger.Warning("Rotating work item stack {0} by {1} around {2} axis",
-                __instance.WorkItemStack.Collectible.Code, rotationValue, rotationAxis);
+            //var rotationValue = __instance.WorkItemStack.GetHorizontalRotation(rotationAxis.Value);
             int? minY = __instance.WorkItemStack.Attributes.GetInt(ModStackAttributes.MinY);
             __result = __result.ToByteArray()
                 .RotateAroundAxis(rotationAxis.Value, ref minY).ToBoolArray();

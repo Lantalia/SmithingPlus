@@ -4,7 +4,7 @@
     "op": "addMerge",
     "path": "/attributesByType",
     "value": {
-      "@*-(nativecopper|nativegold|nativesilver|nativeplatinum)": {
+      "@.*-(nativecopper|nativegold|nativesilver|nativeplatinum)": {
         "isPureMetal": true
       }
     },
@@ -28,7 +28,7 @@
   {
     "file": "game:itemtypes/resource/nugget.json",
     "op": "addMerge",
-    "path": "/behaviorsByType/@*(nativecopper|nativegold|nativesilver|nativeplatinum)",
+    "path": "/behaviorsByType/@.*(nativecopper|nativegold|nativesilver|nativeplatinum)",
     "value": [
       {
         "name": "smithingplus:WorkableNugget"

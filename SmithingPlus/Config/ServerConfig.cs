@@ -33,7 +33,7 @@ public class ServerConfig
     public string ArrowSelector { get; set; } = "@(.*):arrow-(.*)";
     public bool MetalCastingTweaks { get; set; } = true;
     public float CastToolDurabilityPenalty { get; set; } = 0.1f;
-    public bool DynamicMoldUnits { get; set; } = true;
+    public bool DynamicMoldUnits { get; set; } = false;
     public bool HammerTweaks { get; set; } = true;
     public bool RotationRequiresTongs { get; set; } = false;
     public bool AnvilShowRecipeVoxels { get; set; } = true;

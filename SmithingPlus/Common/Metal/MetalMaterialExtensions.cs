@@ -77,7 +77,7 @@ public static class MetalMaterialExtensions
             var ingredients =
                 from ing in gridRecipe.resolvedIngredients
                 where ing is { ResolvedItemstack: not null } &&
-                      ing.IsTool != true &&
+                      !ing.IsTool &&
                       ing.ResolvedItemstack.Collectible != null
                 select ing.ResolvedItemstack.Collectible;
             foreach (var ingredient in ingredients)
@@ -100,8 +100,9 @@ public static class MetalMaterialExtensions
 
     public static MetalMaterial? GetMetalMaterialSmelted(this CollectibleObject collectibleObject, ICoreAPI api)
     {
-        var variantCode = collectibleObject?.CombustibleProps?.SmeltedStack?.ResolvedItemstack.Collectible.GetMetalVariant();
-        return MetalMaterialLoader.GetMaterial(api, variantCode);;
+        var variantCode = collectibleObject?.CombustibleProps?.SmeltedStack?.ResolvedItemstack.Collectible
+            .GetMetalVariant();
+        return variantCode == null ? null : MetalMaterialLoader.GetMaterial(api, variantCode);
     }
 
     // Use when what matters is the processed result (e.g., iron bloom > iron, blister steel > steel)

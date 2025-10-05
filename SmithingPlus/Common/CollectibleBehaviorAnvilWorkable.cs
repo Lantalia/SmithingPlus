@@ -18,7 +18,9 @@ public abstract class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj
     protected abstract byte[,,] Voxels { get; }
 
     protected MetalMaterial? MetalMaterial =>
-        Api != null ? MetalMaterialLoader.GetMaterial(Api, collObj.GetMetalVariant()) ?? collObj.GetMetalMaterialSmelted(Api) : null;
+        Api != null
+            ? MetalMaterialLoader.GetMaterial(Api, collObj.GetMetalVariant()) ?? collObj.GetMetalMaterialSmelted(Api)
+            : null;
 
     protected virtual AnvilPlacementMode PlacementMode { get; set; } = AnvilPlacementMode.Normal;
 
@@ -88,9 +90,9 @@ public abstract class CollectibleBehaviorAnvilWorkable(CollectibleObject collObj
                 ((MetalMaterial?.IngotStack is { } baseMetal && r.Ingredient.SatisfiesAsIngredient(baseMetal))
                  || r.Ingredient.SatisfiesAsIngredient(stack))
                 && !r.Output.ResolvedItemstack.Collectible.Code.Equals(collObj.Code))
-            .OrderBy(r=> r.Output.ResolvedItemstack.Collectible.Code)
-            .ThenBy(r=> r.Output.ResolvedItemstack.StackSize)
-            .DistinctBy(r=> r.Output.ResolvedItemstack.Collectible)
+            .OrderBy(r => r.Output.ResolvedItemstack.Collectible.Code)
+            .ThenBy(r => r.Output.ResolvedItemstack.StackSize)
+            .DistinctBy(r => r.Output.ResolvedItemstack)
             .ToList();
     }
 
