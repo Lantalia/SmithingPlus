@@ -115,7 +115,7 @@
       "type": "string",
       "weight": 1.25,
       "comment": "smithingplus:setting-repairabletoolselector-desc",
-      "default": "@.*(pickaxe|shovel|saw|axe|hoe|knife|hammer|chisel|shears|sword|spear|bow|shield|sickle|scythe|tongs|wrench|solderingiron|cleaver|prospectingpick|crossbow|pistol|rifle|shotgun).*"
+      "default": "@.*(pickaxe|shovel|saw|axe|hoe|knife|hammer|chisel|shears|sword|spear|bow|shield|sickle|scythe|tongs|wrench|solderingiron|cleaver|prospectingpick|crossbow|pistol|rifle|shotgun|blade|halberd|poleaxe|quarterstaff|pike).*"
     },
     {
       "code": "ToolHeadSelector",
@@ -123,7 +123,7 @@
       "type": "string",
       "weight": 1.2,
       "comment": "smithingplus:setting-toolheadselector-desc",
-      "default": "@(.*)(head|blade|boss|barrel|stirrup)(.*)"
+      "default": "@(.*)(head|blade|boss|barrel|stirrup|part)(.*)"
     },
     {
       "code": "IngotSelector",

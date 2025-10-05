@@ -173,7 +173,7 @@ public partial class Core : ModSystem
     private static void Unpatch()
     {
         Logger?.VerboseDebug("Unpatching...");
-        HarmonyInstance?.UnpatchAll();
+        HarmonyInstance?.UnpatchAll(ModId);
         HarmonyInstance = null;
     }
 

@@ -18,9 +18,9 @@ public class ServerConfig
     public float BrokenToolVoxelPercent { get; set; } = 0.8f;
 
     public string RepairableToolSelector { get; set; } =
-        "@.*(pickaxe|shovel|saw|axe|hoe|knife|hammer|chisel|shears|sword|spear|bow|shield|sickle|scythe|tongs|wrench|solderingiron|cleaver|prospectingpick|crossbow|pistol|rifle|shotgun|blade).*";
+        "@.*(pickaxe|shovel|saw|axe|hoe|knife|hammer|chisel|shears|sword|spear|bow|shield|sickle|scythe|tongs|wrench|solderingiron|cleaver|prospectingpick|crossbow|pistol|rifle|shotgun|blade|halberd|poleaxe|quarterstaff|pike).*";
 
-    public string ToolHeadSelector { get; set; } = "@(.*)(head|blade|boss|barrel|stirrup)(.*)";
+    public string ToolHeadSelector { get; set; } = "@(.*)(head|blade|boss|barrel|stirrup|part)(.*)";
     public string IngotSelector { get; set; } = "@(.*):ingot-(.*)";
     public string WorkItemSelector { get; set; } = "@(.*):workitem-(.*)";
     public bool DontRepairBrokenToolHeads { get; set; } = false;

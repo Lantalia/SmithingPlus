@@ -13,5 +13,10 @@ v1.8.0
 - [Fixed] Some missing recipes when smithing with bits (would include only one recipe per output type)
 - [Fixed] Smithing ingots with bits would always give copper
 - [Fixed] Handbook page for molds would show 20 bits required even with DynamicMoldUnits turned on
-- [Tweak] DynamicMoldUnits is off by default now, will probably make all future new features off by default, I guess
 - [Fixed] Bug in client tweak for anvil ingredient count: The first time the dialog was opened, the tweak wouldn't get applied.
+- [Compatibility] EMTK Compatibility, use UnpatchAll(ModId) when unloading
+- [Compatibility] Some CO weapons should now be supported out of the box in the config (won't change existing configs)
+- [Tweak] Reduced debug logs output
+- [Tweak] Small handbook info improvements
+- [Tweak] DynamicMoldUnits is off by default now, will probably make all future new features off by default, I guess
+- [Client Tweak] Search bar for smithing recipes

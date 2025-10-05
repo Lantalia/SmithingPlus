@@ -16,8 +16,16 @@ namespace SmithingPlus.ClientTweaks;
 
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 [HarmonyPatchCategory(Core.ClientTweaksCategories.AnvilShowRecipeVoxels)]
-public static class RecipeIngredientCountPatch
+public static class AnvilRecipeSelectorPatch
 {
+    private static List<SkillItem>? _defaultSkillItemCache;
+    
+    private struct CustomSkillItemData(object defaultData, int originalIndex)
+    {
+        public readonly object DefaultData = defaultData;
+        public int OriginalIndex = originalIndex;
+    }
+    
     [HarmonyTranspiler]
     [HarmonyPatch(typeof(GuiDialogBlockEntityRecipeSelector))]
     [HarmonyPatch(MethodType.Constructor)]
@@ -69,17 +77,19 @@ public static class RecipeIngredientCountPatch
         BlockPos blockEntityPos,
         ICoreClientAPI capi,
         GuiDialogBlockEntityRecipeSelector __instance,
-        List<SkillItem> ___skillItems,
+        ref List<SkillItem> ___skillItems,
         int ___prevSlotOver
     )
     {
+        _defaultSkillItemCache = ___skillItems;
         var cellCount = Math.Max(1, ___skillItems.Count);
         var columns = Math.Min(cellCount, Core.Config?.AnvilRecipeSelectionColumns ?? 8);
         var rows = (int)Math.Ceiling(cellCount / (double)columns);
         var slotSize = GuiElementPassiveItemSlot.unscaledSlotSize + GuiElementItemSlotGridBase.unscaledSlotPadding;
         var fixedWidth = Math.Max(300.0, columns * slotSize);
-        var gridBounds = ElementBounds.Fixed(0.0, 30.0, fixedWidth, rows * slotSize);
-        var nameBounds = ElementBounds.Fixed(0.0, rows * slotSize + 50.0, fixedWidth, 33.0);
+        var searchBarBounds = ElementBounds.Fixed(0.0, 30, fixedWidth, 30.0);
+        var gridBounds = searchBarBounds.BelowCopy(fixedDeltaY: 10.0).WithFixedWidth(fixedWidth).WithFixedHeight( rows * slotSize);
+        var nameBounds = gridBounds.BelowCopy(fixedDeltaY: 10.0).WithFixedHeight(30);
         var descBounds = nameBounds.BelowCopy(fixedDeltaY: 10.0);
         var ingredientDescBounds = descBounds.BelowCopy().WithFixedWidth(descBounds.fixedWidth * 0.5);
         var richTextBounds = ingredientDescBounds.RightCopy()
@@ -95,38 +105,33 @@ public static class RecipeIngredientCountPatch
             .AddDialogTitleBar(Lang.Get("Select Recipe"), __instance.OnTitleBarClose())
             .BeginChildElements(dialogBounds)
             .AddSkillItemGrid(___skillItems, columns, rows, __instance.OnSlotClick(), gridBounds, "skillitemgrid")
+            .AddTextInput(searchBarBounds, (text) => OnSearchTextChanged(__instance, text), CairoFont.WhiteSmallishText(), "searchbar")
             .AddDynamicText("", CairoFont.WhiteSmallishText(), nameBounds, "name")
             .AddDynamicText("", CairoFont.WhiteDetailText(), descBounds, "desc")
             .AddDynamicText("", CairoFont.WhiteDetailText(), ingredientDescBounds, "ingredientDesc")
             .AddRichtext("", CairoFont.WhiteDetailText(), richTextBounds, "ingredientCounts")
             .EndChildElements()
             .Compose();
-
+        __instance.SingleComposer.GetTextInput("searchbar").SetPlaceHolderText(Lang.Get("Search..."));
         __instance.SingleComposer.GetSkillItemGrid("skillitemgrid").OnSlotOver = num =>
-            OnSlotOver(__instance, ___skillItems, ___prevSlotOver, capi, num);
+            OnSlotOver(__instance, ___prevSlotOver, capi, num);
     }
 
-    public static void CustomSetCounts(
-        GuiDialogBlockEntityRecipeSelector? dlg,
-        int index,
-        SmithingRecipe recipe
-    )
+    private static void OnSearchTextChanged(GuiDialogBlockEntityRecipeSelector recipeSelector, string text)
     {
-        if (dlg?.GetField<List<SkillItem>>("skillItems") is null)
+        if (_defaultSkillItemCache == null)
             return;
-        dlg.GetField<List<SkillItem>>("skillItems")[index].Data = recipe;
-    }
-
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(BlockEntityAnvil), "OpenDialog")]
-    public static void OpenDialog_Postfix(ItemStack ingredient, GuiDialog ___dlg)
-    {
-        var collectibleInterface = ingredient.Collectible.GetCollectibleInterface<IAnvilWorkable>();
-        List<SmithingRecipe> recipes = collectibleInterface.GetMatchingRecipes(ingredient);
-        for (int index = 0; index < recipes.Count; ++index)
+        for (var index = 0; index < _defaultSkillItemCache.Count; ++index)
         {
-            CustomSetCounts(___dlg as GuiDialogBlockEntityRecipeSelector, index, recipes[index]);
+            _defaultSkillItemCache[index].Data = new CustomSkillItemData(_defaultSkillItemCache[index].Data, index);
         }
+        var searchText = text.ToLowerInvariant();
+        var filteredSkillItems = string.IsNullOrWhiteSpace(searchText)
+            ? _defaultSkillItemCache
+            : _defaultSkillItemCache.Where(si =>
+                si.Name.Contains(searchText, StringComparison.InvariantCultureIgnoreCase)).ToList();
+        recipeSelector.SingleComposer.GetSkillItemGrid("skillitemgrid").SetField("skillItems", filteredSkillItems);
+        recipeSelector.SetField("skillItems", filteredSkillItems);
     }
 
     [HarmonyReversePatch]
@@ -141,25 +146,28 @@ public static class RecipeIngredientCountPatch
         return () => OnTitleBarClose_Reverse(recipeSelector);
     }
 
-    [HarmonyReversePatch]
-    [HarmonyPatch(typeof(GuiDialogBlockEntityRecipeSelector), "OnSlotClick")]
-    private static void OnSlotClick_Reverse(GuiDialogBlockEntityRecipeSelector __instance, [UsedImplicitly] int num)
-    {
-        throw new NotImplementedException("Reverse patch stub.");
-    }
-
     private static Action<int> OnSlotClick(this GuiDialogBlockEntityRecipeSelector recipeSelector)
     {
-        return num => OnSlotClick_Reverse(recipeSelector, num);
+        return num =>
+        {
+            var onSelectedRecipe = recipeSelector.GetField<Action<int>>("onSelectedRecipe");
+            var index = num;
+            if (recipeSelector.GetField<List<SkillItem>>("skillItems")[num].Data is CustomSkillItemData customData)
+                index = customData.OriginalIndex;
+            onSelectedRecipe?.Invoke(index);
+            recipeSelector.SetField("didSelect", true);
+            recipeSelector.TryClose();
+            _defaultSkillItemCache = null;
+        };
     }
 
     private static void OnSlotOver(
         GuiDialogBlockEntityRecipeSelector recipeSelector,
-        List<SkillItem> skillItems,
         int prevSlotOver,
         ICoreClientAPI capi,
         int num)
     {
+        var skillItems = recipeSelector.GetField<List<SkillItem>>("skillItems");
         if (num >= skillItems.Count || num == prevSlotOver)
             return;
         var currentSkillItem = skillItems[num];
@@ -168,13 +176,19 @@ public static class RecipeIngredientCountPatch
 
         var text = "";
         ItemStack? materialStack = null;
-        if (skillItems[num].Data is ItemStack[] data)
+        if (skillItems[num].Data is ItemStack[] data )
         {
-            materialStack = data[0];
+            var stack = data[0];
+            var cInterface = stack.Collectible.GetCollectibleInterface<IAnvilWorkable>();
+            var recipe = cInterface?.GetMatchingRecipes(stack)[num];
+            materialStack = recipe != null ? GetAdjustedIngredientStack(capi, stack, recipe.RecipeId) : stack;
         }
-        if (skillItems[num].Data is SmithingRecipe recipe)
+        if (skillItems[num].Data is CustomSkillItemData { DefaultData: ItemStack[] customData })
         {
-            materialStack = GetAdjustedIngredientStack(capi, recipe.Ingredient.ResolvedItemstack, recipe.RecipeId);
+            var stack = customData[0];
+            var cInterface = stack.Collectible.GetCollectibleInterface<IAnvilWorkable>();
+            var recipe = cInterface?.GetMatchingRecipes(stack)[num];
+            materialStack = recipe != null ? GetAdjustedIngredientStack(capi, stack, recipe.RecipeId) : stack;
         }
         if (materialStack != null){
             text = Lang.Get("recipeselector-requiredcount", materialStack.StackSize,

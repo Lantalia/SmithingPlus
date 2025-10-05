@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 using SmithingPlus.Util;
@@ -84,13 +85,13 @@ public class MetalMaterialLoader : ModSystem
         var resolvedMaterials = api.GetModSystem<MetalMaterialLoader>()?.ResolvedMaterials;
         if (resolvedMaterials == null)
         {
-            Core.Logger.VerboseDebug(
+            Debug.WriteLine(
                 "[MetalMaterial] Metal materials not resolved. You might be calling GetMaterial too early.");
             return null;
         }
 
         if (resolvedMaterials.TryGetValue(code, out var material)) return material;
-        Core.Logger.VerboseDebug($"[MetalMaterial] Metal material {code} not found. Will return null.");
+        Debug.WriteLine($"[MetalMaterial] Metal material {code} not found. Will return null.");
         return null;
     }
 }

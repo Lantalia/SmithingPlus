@@ -41,24 +41,9 @@ public partial class HandbookInfoPatch
         var haveText = components.Count > 0;
         if (moldStacks.Length <= 0) return;
         AddHeading(components, capi, "Can be cast in", ref haveText);
-
-        var groupedStacks = moldStacks
-            .GroupBy(s =>
-            {
-                var code = s.Collectible.Code;
-                return $"{code.Domain}:{string.Join("-", code.Path.Split('-').SkipLast(1))}";
-            })
-            .ToArray();
-
-        foreach (var group in groupedStacks)
-        {
-            var stacksInGroup = group.ToArray();
-            Array.ForEach(stacksInGroup, s =>
-                s.StackSize = ToolMoldUnitsPatch.GetPatchedRequiredUnits(capi, s.Block, stack));
-            var moldsSlideshow = new SlideshowItemstackTextComponent(capi, stacksInGroup, 40, EnumFloat.Inline,
-                    cs => openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs)))
-                { PaddingLeft = 2, ShowStackSize = true };
-            components.Add(moldsSlideshow);
-        }
+        
+        Array.ForEach(moldStacks, s =>
+            s.StackSize = ToolMoldUnitsPatch.GetPatchedRequiredUnits(capi, s.Block, stack));
+        AddAlignedSlideshows(capi, openDetailPageFor, components, moldStacks.ToList());
     }
 }

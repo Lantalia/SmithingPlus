@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using SmithingPlus.Util;
 using Vintagestory.API.Common;
@@ -35,13 +36,13 @@ public static class MetalMaterialExtensions
 
         // If that fails, check if the ingredient can be crafted into metal bits or similar
         var childRecipes = collObj.GetGridRecipesAsIngredient(api);
-        Core.Logger.VerboseDebug(
+        Debug.WriteLine(
             $"[MetalMaterial] CollectibleObject {collObj.Code} has no metal material defined, trying to resolve from {childRecipes.Count()} recipes (as ingredient).");
         if (TryGetMetalMaterialFromIngredients(api, childRecipes, out metalMaterial))
             return metalMaterial;
 
         // If that fails, return null
-        Core.Logger.VerboseDebug(
+        Debug.WriteLine(
             $"[MetalMaterial] Failed to find metal material for collectible {collObj.Code}");
         return null;
     }
@@ -49,7 +50,7 @@ public static class MetalMaterialExtensions
     // To get the metal material directly from the CollectibleObject's attributes or its code, if possible
     private static MetalMaterial? GetMetalMaterialDirect(this CollectibleObject collObj, ICoreAPI api)
     {
-        Core.Logger.VerboseDebug(
+        Debug.WriteLine(
             $"[MetalMaterial] Trying to resolve metal material for CollectibleObject {collObj.Code} directly.");
         MetalMaterial? metalMaterial;
         // First get the material from attributes, if available
@@ -58,7 +59,7 @@ public static class MetalMaterialExtensions
             var materialCode = collObj.Attributes["metalMaterial"].AsString();
             metalMaterial = MetalMaterialLoader.GetMaterial(api, materialCode);
             if (metalMaterial != null) return metalMaterial;
-            Core.Logger.VerboseDebug(
+            Debug.WriteLine(
                 $"[MetalMaterial] CollectibleObject {collObj.Code} has metalMaterial attribute with code {materialCode}, but no matching material found.");
         }
 
