@@ -13,11 +13,11 @@ namespace SmithingPlus.CastingTweaks;
 [HarmonyPatchCategory(Core.DynamicMoldsCategory)]
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 [HarmonyPatch(typeof(BlockEntityToolMold))]
+[HarmonyPriority(Priority.Last)]
 public class ToolMoldUnitsPatch
 {
     [HarmonyPostfix]
     [HarmonyPatch(nameof(BlockEntityToolMold.Initialize))]
-    [HarmonyPriority(Priority.Last)]
     public static void Initialize_Postfix(BlockEntityToolMold __instance, ref int ___requiredUnits, ICoreAPI api)
     {
         // Assume copper stack as metal for unit calculation,
@@ -39,7 +39,9 @@ public class ToolMoldUnitsPatch
     {
         var dropStacks = GetMoldedStacksStatic(api, toolMold, fromMetal);
         if (dropStacks == null || dropStacks.Length == 0)
-            return toolMold.Attributes["requiredUnits"].AsInt(); // <-- Patch will only apply for molds that work for copper!
+            return
+                toolMold.Attributes["requiredUnits"]
+                    .AsInt(); // <-- Patch will only apply for molds that work for copper!
         var voxelCount = VoxelCountForStacks(api, dropStacks);
         if (voxelCount is null or 0)
             return toolMold.Attributes["requiredUnits"].AsInt();

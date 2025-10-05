@@ -2,9 +2,6 @@
 - TODO Store overall transform for flip tool mode to properly reconstruct recipe outline rotation.
     Current method can have bugs and is harder to maintain.
 - TODO [Minor] Auto transform for forgeable toolheads?
-- TODO [Insignificant but annoying] Bug in client tweak for anvil ingredient count.
-	The first time the dialog was opened, the tweak wouldn't get applied.
-	Using a prefix instead of a postfix won't work. (Check dana tweaks?)
 - TODO [Major] Config rework
 	- TODO [Tweak] Config option to disable iron bloom modifications from helve hammers
 - TODO [Major] Tool dismantling / tool head removal
@@ -17,3 +14,4 @@ v1.8.0
 - [Fixed] Smithing ingots with bits would always give copper
 - [Fixed] Handbook page for molds would show 20 bits required even with DynamicMoldUnits turned on
 - [Tweak] DynamicMoldUnits is off by default now, will probably make all future new features off by default, I guess
+- [Fixed] Bug in client tweak for anvil ingredient count: The first time the dialog was opened, the tweak wouldn't get applied.

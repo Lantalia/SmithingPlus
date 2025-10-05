@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Emit;
 using HarmonyLib;
 using JetBrains.Annotations;
 using SmithingPlus.Util;
@@ -17,30 +18,61 @@ namespace SmithingPlus.ClientTweaks;
 [HarmonyPatchCategory(Core.ClientTweaksCategories.AnvilShowRecipeVoxels)]
 public static class RecipeIngredientCountPatch
 {
-    private static List<SmithingRecipe> _selectedRecipes = [];
-    private static ItemStack? _selectedIngredient;
-
-    [HarmonyPostfix]
-    [HarmonyPatch(typeof(BlockEntityAnvil), "OpenDialog")]
-    public static void OpenDialog_Postfx(BlockEntityAnvil __instance, ItemStack? ingredient)
+    [HarmonyTranspiler]
+    [HarmonyPatch(typeof(GuiDialogBlockEntityRecipeSelector))]
+    [HarmonyPatch(MethodType.Constructor)]
+    [HarmonyPatch([
+        typeof(string),
+        typeof(ItemStack[]),
+        typeof(Action<int>),
+        typeof(Action),
+        typeof(BlockPos),
+        typeof(ICoreClientAPI)
+    ])]
+    public static IEnumerable<CodeInstruction> RecipeSelectorCtor_Transpile_SetupDialog(
+        IEnumerable<CodeInstruction> instructions)
     {
-        if (__instance?.Api is not ICoreClientAPI) return;
-        if (ingredient != null) _selectedIngredient = ingredient;
-        var recipes = ingredient?.Collectible.GetCollectibleInterface<IAnvilWorkable>()?.GetMatchingRecipes(ingredient);
-        if (recipes != null) _selectedRecipes = recipes;
+        var codeInstructions = instructions.ToList();
+        // The original target to remove: instance void ...::SetupDialog()
+        var setupDialogMethod = AccessTools.Method(
+            typeof(GuiDialogBlockEntityRecipeSelector),
+            "SetupDialog", []);
+
+        var codeMatcher = new CodeMatcher(codeInstructions)
+            .End()
+            .MatchEndBackwards(
+                new CodeMatch(OpCodes.Ldarg_0),
+                new CodeMatch(ci => ci.Calls(setupDialogMethod))
+            );
+        if (codeMatcher.IsValid)
+            // don't call the original SetupDialog
+            codeMatcher.SetOpcodeAndAdvance(OpCodes.Pop);
+        return codeMatcher.InstructionEnumeration();
     }
 
-    [HarmonyPrefix]
-    [HarmonyPatch(typeof(GuiDialogBlockEntityRecipeSelector), "SetupDialog")]
-    public static bool SetupDialog_Prefix(
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(GuiDialogBlockEntityRecipeSelector))]
+    [HarmonyPatch(MethodType.Constructor)]
+    [HarmonyPatch([
+        typeof(string),
+        typeof(ItemStack[]),
+        typeof(Action<int>),
+        typeof(Action),
+        typeof(BlockPos),
+        typeof(ICoreClientAPI)
+    ])]
+    public static void CustomSetupDialog(
+        string DialogTitle,
+        ItemStack[] recipeOutputs,
+        Action<int> onSelectedRecipe,
+        Action onCancelSelect,
+        BlockPos blockEntityPos,
+        ICoreClientAPI capi,
         GuiDialogBlockEntityRecipeSelector __instance,
         List<SkillItem> ___skillItems,
-        int ___prevSlotOver,
-        ICoreClientAPI ___capi,
-        BlockPos ___blockEntityPos
+        int ___prevSlotOver
     )
     {
-        if (_selectedRecipes.Count == 0) return true;
         var cellCount = Math.Max(1, ___skillItems.Count);
         var columns = Math.Min(cellCount, Core.Config?.AnvilRecipeSelectionColumns ?? 8);
         var rows = (int)Math.Ceiling(cellCount / (double)columns);
@@ -57,8 +89,8 @@ public static class RecipeIngredientCountPatch
         var dialogBounds = ElementBounds.Fill.WithFixedPadding(GuiStyle.ElementToDialogPadding);
         dialogBounds.BothSizing = ElementSizing.FitToChildren;
 
-        var dialogName = "toolmodeselect" + ___blockEntityPos;
-        __instance.SingleComposer = ___capi.Gui.CreateCompo(dialogName, ElementStdBounds.AutosizedMainDialog)
+        var dialogName = "toolmodeselect" + blockEntityPos;
+        __instance.SingleComposer = capi.Gui.CreateCompo(dialogName, ElementStdBounds.AutosizedMainDialog)
             .AddShadedDialogBG(dialogBounds)
             .AddDialogTitleBar(Lang.Get("Select Recipe"), __instance.OnTitleBarClose())
             .BeginChildElements(dialogBounds)
@@ -71,9 +103,30 @@ public static class RecipeIngredientCountPatch
             .Compose();
 
         __instance.SingleComposer.GetSkillItemGrid("skillitemgrid").OnSlotOver = num =>
-            OnSlotOver(__instance, ___skillItems, ___prevSlotOver, ___capi, num);
-        _selectedRecipes.Clear();
-        return false;
+            OnSlotOver(__instance, ___skillItems, ___prevSlotOver, capi, num);
+    }
+
+    public static void CustomSetCounts(
+        GuiDialogBlockEntityRecipeSelector? dlg,
+        int index,
+        SmithingRecipe recipe
+    )
+    {
+        if (dlg?.GetField<List<SkillItem>>("skillItems") is null)
+            return;
+        dlg.GetField<List<SkillItem>>("skillItems")[index].Data = recipe;
+    }
+
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(BlockEntityAnvil), "OpenDialog")]
+    public static void OpenDialog_Postfix(ItemStack ingredient, GuiDialog ___dlg)
+    {
+        var collectibleInterface = ingredient.Collectible.GetCollectibleInterface<IAnvilWorkable>();
+        List<SmithingRecipe> recipes = collectibleInterface.GetMatchingRecipes(ingredient);
+        for (int index = 0; index < recipes.Count; ++index)
+        {
+            CustomSetCounts(___dlg as GuiDialogBlockEntityRecipeSelector, index, recipes[index]);
+        }
     }
 
     [HarmonyReversePatch]
@@ -100,57 +153,57 @@ public static class RecipeIngredientCountPatch
         return num => OnSlotClick_Reverse(recipeSelector, num);
     }
 
-    private static void OnSlotOver(GuiDialogBlockEntityRecipeSelector recipeSelector, List<SkillItem> skillItems,
+    private static void OnSlotOver(
+        GuiDialogBlockEntityRecipeSelector recipeSelector,
+        List<SkillItem> skillItems,
         int prevSlotOver,
-        ICoreClientAPI capi, int num)
+        ICoreClientAPI capi,
+        int num)
     {
-        if (num >= skillItems.Count || num == prevSlotOver || num >= _selectedRecipes.Count)
+        if (num >= skillItems.Count || num == prevSlotOver)
             return;
-        var selectedRecipe = _selectedRecipes[num];
-        var recipeId = selectedRecipe.RecipeId;
-        var outputStack = selectedRecipe.Output.ResolvedItemstack;
         var currentSkillItem = skillItems[num];
         recipeSelector.SingleComposer.GetDynamicText("name").SetNewText(currentSkillItem.Name);
         recipeSelector.SingleComposer.GetDynamicText("desc").SetNewText(currentSkillItem.Description);
-        var materialStack = GetSmithingIngredientStack(capi, selectedRecipe.Output.ResolvedItemstack, recipeId);
-        if (outputStack == null || _selectedIngredient == null || materialStack == null)
+
+        var text = "";
+        ItemStack? materialStack = null;
+        if (skillItems[num].Data is ItemStack[] data)
         {
-            var text = "";
-            if (skillItems[num].Data is ItemStack[] data)
-                text = Lang.Get("recipeselector-requiredcount", data[0].StackSize, data[0].GetName().ToLower());
-            recipeSelector.SingleComposer.GetDynamicText("ingredientDesc").SetNewText(text);
-            recipeSelector.SingleComposer.GetRichtext("ingredientCounts")
-                .SetNewText([]);
-            return;
+            materialStack = data[0];
         }
-
-        recipeSelector.SingleComposer.GetDynamicText("ingredientDesc")
-            .SetNewText(Lang.Get("recipeselector-requiredcount", materialStack.StackSize,
-                materialStack.GetName().ToLower()));
-
-        var onStackClickedAction = new Action<ItemStack>(cs =>
-            capi.LinkProtocols["handbook"]
-                ?.DynamicInvoke(new LinkTextComponent("handbook://" + GuiHandbookItemStackPage.PageCodeForStack(cs))));
-
-        var ingotStackComponent =
-            new ItemstackTextComponent(capi, materialStack, 50, 5.0, EnumFloat.Inline, onStackClickedAction)
-                { ShowStacksize = true };
-        var stackComponentsText = VtmlUtil.Richtextify(capi, "", CairoFont.WhiteDetailText())
-            .AddToArray(ingotStackComponent).ToArray();
-        recipeSelector.SingleComposer.GetRichtext("ingredientCounts").SetNewText(stackComponentsText);
+        if (skillItems[num].Data is SmithingRecipe recipe)
+        {
+            materialStack = GetAdjustedIngredientStack(capi, recipe.Ingredient.ResolvedItemstack, recipe.RecipeId);
+        }
+        if (materialStack != null){
+            text = Lang.Get("recipeselector-requiredcount", materialStack.StackSize,
+                materialStack.GetName().ToLower());
+            var onStackClickedAction = new Action<ItemStack>(cs =>
+                capi.LinkProtocols["handbook"]
+                    ?.DynamicInvoke(
+                        new LinkTextComponent("handbook://" + GuiHandbookItemStackPage.PageCodeForStack(cs))));
+            var ingotStackComponent =
+                new ItemstackTextComponent(capi, materialStack, 50, 5.0, EnumFloat.Inline, onStackClickedAction)
+                    { ShowStacksize = true };
+            var stackComponentsText = VtmlUtil.Richtextify(capi, "", CairoFont.WhiteDetailText())
+                .AddToArray(ingotStackComponent).ToArray();
+            recipeSelector.SingleComposer.GetRichtext("ingredientCounts").SetNewText(stackComponentsText);
+        }
+        recipeSelector.SingleComposer.GetDynamicText("ingredientDesc").SetNewText(text);
     }
-
-    public static ItemStack? GetSmithingIngredientStack(
+    
+    public static ItemStack GetAdjustedIngredientStack(
         ICoreClientAPI capi,
-        ItemStack stack,
+        ItemStack ingredientStack,
         int recipeId)
     {
-        if (_selectedIngredient == null)
-            return null;
         var voxelCount = CacheHelper.GetOrAdd(Core.RecipeVoxelCountCache, recipeId,
-            () => capi.GetSmithingRecipes().Find(recipe => recipe.RecipeId == recipeId)?.Voxels.VoxelCount() ?? 0);
-        var stackSize = GetStackCount(_selectedIngredient.Collectible, voxelCount);
-        var adjustedIngredient = _selectedIngredient.Clone();
+                () => capi.GetSmithingRecipes().Find(recipe => recipe.RecipeId == recipeId)?.Voxels.VoxelCount() ?? 0);
+        if (voxelCount <= 0)
+            return ingredientStack;
+        var stackSize = GetStackCount(ingredientStack.Collectible, voxelCount);
+        var adjustedIngredient = ingredientStack.Clone();
         adjustedIngredient.SetTemperature(capi.World, 0);
         adjustedIngredient.StackSize = stackSize;
         return adjustedIngredient;
