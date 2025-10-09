@@ -78,11 +78,10 @@ public partial class Core : ModSystem
         base.AssetsFinalize(api);
         foreach (var collObj in api.World.Collectibles.Where(c => c?.Code != null))
         {
-            collObj.AddBehaviorIf<CollectibleBehaviorDisplayWorkableTemp>(Config.ShowWorkableTemperature &&
-                                                                          collObj
-                                                                                  .GetCollectibleInterface<
-                                                                                      IAnvilWorkable>()
-                                                                              is not null);
+            collObj.AddBehaviorIf<CollectibleBehaviorDisplayWorkableTemp>(
+                api.Side == EnumAppSide.Client &&
+                Config.ShowWorkableTemperature &&
+                collObj.GetCollectibleInterface<IAnvilWorkable>() is not null);
             collObj.AddBehaviorIf<CollectibleBehaviorScrapeCrucible>(Config.RecoverBitsOnSplit &&
                                                                      collObj is ItemChisel);
             collObj.AddBehaviorIf<CollectibleBehaviorSmeltedContainer>(Config.RecoverBitsOnSplit &&
@@ -111,7 +110,7 @@ public partial class Core : ModSystem
             // { "workableRecipe": true }
             // A better solution would be
             // to define the recipe with code instead of cloning an ingot recipe defined in the assets
-            if (api.Side.IsClient()) return;
+            if (api.Side.IsClient()) continue;
             var ingotCode = new AssetLocation("game:ingot-copper");
             var ingotRecipe = api.ModLoader.GetModSystem<RecipeRegistrySystem>().SmithingRecipes
                 .FirstOrDefault(r =>
@@ -132,7 +131,7 @@ public partial class Core : ModSystem
                 {
                     Type = collObj.ItemClass,
                     Code = collObj.Code,
-                    RecipeAttributes = new JsonObject($"{{{ModRecipeAttributes.WorkableRecipe}: true}}")
+                    RecipeAttributes = ingotRecipe.Ingredient.RecipeAttributes
                 },
                 Output = new JsonItemStack
                 {

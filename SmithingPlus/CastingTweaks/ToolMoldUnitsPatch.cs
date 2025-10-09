@@ -1,3 +1,4 @@
+#nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,7 +39,7 @@ public class ToolMoldUnitsPatch
     public static int GetPatchedRequiredUnits(ICoreAPI api, Block toolMold, ItemStack fromMetal)
     {
         var dropStacks = GetMoldedStacksStatic(api, toolMold, fromMetal);
-        if (dropStacks == null || dropStacks.Length == 0)
+        if (dropStacks.Length == 0)
             return
                 toolMold.Attributes["requiredUnits"]
                     .AsInt(); // <-- Patch will only apply for molds that work for copper!
@@ -69,7 +70,7 @@ public class ToolMoldUnitsPatch
         var voxelsPerItem = Math.Max(recipeMaterialVoxels / cheapestOutput, 0);
         return voxelsPerItem * stack.StackSize;
     }
-
+    
     private static ItemStack[] GetMoldedStacksStatic(ICoreAPI api, Block toolMold, ItemStack fromMetal)
     {
         // why try catch? vanilla code does this...
@@ -78,15 +79,17 @@ public class ToolMoldUnitsPatch
             if (toolMold.Attributes["drop"].Exists)
             {
                 var jStack =
-                    toolMold.Attributes["drop"].AsObject<JsonItemStack>(null, toolMold.Code.Domain);
+#pragma warning disable CS8625 // Cannot convert null literal to non-nullable reference type.
+                    toolMold.Attributes["drop"].AsObject<JsonItemStack>(defaultValue: null, toolMold.Code.Domain);
+#pragma warning restore CS8625 // Cannot convert null literal to non-nullable reference type.
                 if (jStack == null)
-                    return null;
+                    return [];
                 var itemStack = MoldOutputStackFromCode(jStack, api, toolMold, fromMetal);
                 return itemStack == null ? [] : [itemStack];
             }
 
             var jsonItemStackArray =
-                toolMold.Attributes["drops"].AsObject<JsonItemStack[]>(null, toolMold.Code.Domain);
+                toolMold.Attributes["drops"].AsObject<JsonItemStack[]>([], toolMold.Code.Domain);
             var itemStackList = new List<ItemStack>();
             foreach (var jStack in jsonItemStackArray)
             {
@@ -94,7 +97,6 @@ public class ToolMoldUnitsPatch
                 if (itemStack != null)
                     itemStackList.Add(itemStack);
             }
-
             return itemStackList.ToArray();
         }
         catch (JsonReaderException ex)
@@ -106,7 +108,7 @@ public class ToolMoldUnitsPatch
         }
     }
 
-    private static ItemStack MoldOutputStackFromCode(JsonItemStack jstack, ICoreAPI api, Block toolMold,
+    private static ItemStack? MoldOutputStackFromCode(JsonItemStack jstack, ICoreAPI api, Block toolMold,
         ItemStack fromMetal)
     {
         var newValue = fromMetal.Collectible.LastCodePart();

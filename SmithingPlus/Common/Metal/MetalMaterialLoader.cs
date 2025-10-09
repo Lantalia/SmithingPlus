@@ -4,7 +4,6 @@ using System.Linq;
 using JetBrains.Annotations;
 using SmithingPlus.Util;
 using Vintagestory.API.Common;
-using Vintagestory.GameContent;
 
 namespace SmithingPlus.Metal;
 
@@ -34,12 +33,18 @@ public class MetalMaterialLoader : ModSystem
                     $"[MetalMaterial] Duplicate metal material found {metalMaterial.Code} at location {assetLocation}. Ignoring duplicate.");
         }
 
-        var metalsByCode = api.GetModSystem<SurvivalCoreSystem>()?.metalsByCode;
-        if (metalsByCode == null) return;
+        var metalsByCode = new Dictionary<string, MetalPropertyVariant>();
+        foreach (var (assetLocation, metalProperty) in api.Assets.GetMany<MetalProperty>(api.Logger,
+                     "worldproperties/block/metal.json"))
+        {
+            Debug.WriteLine("Found metal property: " + assetLocation);
+            foreach (var variant in metalProperty.Variants) metalsByCode[variant.Code.Path] = variant;
+        }
+
         Core.Logger.Notification("[MetalMaterial] Loading metal materials from worldproperties/block/metal ...");
         foreach (var metalVariant in metalsByCode.Keys)
         {
-            if (_metalMaterials.ContainsKey(new AssetLocation(metalVariant)))
+            if (_metalMaterials.ContainsKey(new AssetLocation(metalVariant).Path))
             {
                 Core.Logger.Warning(
                     $"[MetalMaterial] Default metal material {metalVariant} overridden by custom-defined material.");
@@ -55,7 +60,7 @@ public class MetalMaterialLoader : ModSystem
             {
                 Code = new AssetLocation(metalVariant)
             };
-            _metalMaterials.TryAdd(metalVariant, metalMaterial);
+            _metalMaterials.TryAdd(new AssetLocation(metalVariant).Path, metalMaterial);
         }
 
         Core.Logger.Notification(

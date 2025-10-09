@@ -1,0 +1,53 @@
+[
+  {
+    "file": "rustboundmagic:itemtypes/resources/rod.json",
+    "op": "addMerge",
+    "path": "/attributes",
+    "value": {
+      "isPureMetal": true,
+      "forgable": true,
+      "inForgeTransform": {
+        "translation": {
+          "x": 0,
+          "y": 0,
+          "z": 0.005
+        },
+        "scale": 0.95
+      }
+    },
+    "side": "Server",
+    "dependsOn": [
+      {
+        "modid": "rustboundmagic"
+      }
+    ]
+  },
+  {
+    "file": "rustboundmagic:itemtypes/resources/rod.json",
+    "op": "addMerge",
+    "path": "/behaviors",
+    "value": [
+      {
+        "name": "smithingplus:JsonAnvilWorkable",
+        "properties": {
+          "voxels": [
+            [
+              "##########",
+              "##########"
+            ],
+            [
+              "##########",
+              "##########"
+            ]
+          ]
+        }
+      }
+    ],
+    "side": "Server",
+    "dependsOn": [
+      {
+        "modid": "rustboundmagic"
+      }
+    ]
+  }
+]

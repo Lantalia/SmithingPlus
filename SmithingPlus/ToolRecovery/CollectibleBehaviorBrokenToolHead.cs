@@ -4,6 +4,7 @@ using System.Text;
 using HarmonyLib;
 using JetBrains.Annotations;
 using SmithingPlus.Util;
+using Vintagestory.API.Client;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Util;
@@ -44,6 +45,7 @@ public class CollectibleBehaviorBrokenToolHead(CollectibleObject collObj) : Coll
     public override void GetHeldItemInfo(ItemSlot inSlot, StringBuilder dsc, IWorldAccessor world, bool withDebugInfo)
     {
         if (!IsBrokenToolHead(inSlot.Itemstack)) return;
+        if (world.Api is not ICoreClientAPI) return;
         var brokenCount = inSlot.Itemstack.GetBrokenCount();
         if (brokenCount <= 0) return;
         if (Core.Config.ShowBrokenCount) dsc.AppendLine(Lang.Get($"{LangKey} {{0}} times", brokenCount));
@@ -64,7 +66,7 @@ public class CollectibleBehaviorBrokenToolHead(CollectibleObject collObj) : Coll
         var unknownWorkItem = Lang.Get("Unknown work item");
         var unfinished = $"@(.*){Lang.Get("Unfinished {0}", "(.*)")}(.*)";
 
-        var lines = dsc.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+        var lines = dsc.ToString().Split([Environment.NewLine], StringSplitOptions.None);
         dsc.Clear();
         foreach (var line in lines)
             if (!line.Contains(unknownWorkItem) && !WildcardUtil.Match(unfinished, line))

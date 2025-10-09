@@ -18,22 +18,27 @@
     "file": "game:itemtypes/resource/nugget.json",
     "op": "addMerge",
     "path": "/behaviorsByType",
-    "value": {},
-    "side": "Server",
-    "condition": {
-      "when": "SmithingPlus_WorkableBits",
-      "isValue": "true"
-    }
-  },
-  {
-    "file": "game:itemtypes/resource/nugget.json",
-    "op": "addMerge",
-    "path": "/behaviorsByType/@.*(nativecopper|nativegold|nativesilver|nativeplatinum)",
-    "value": [
-      {
-        "name": "smithingplus:WorkableNugget"
-      }
-    ],
+    "value": {
+      "@.*(nativecopper|nativegold|nativesilver|nativeplatinum)": [
+        {
+          "name": "smithingplus:WorkableNugget"
+        },
+        {
+          "name": "GroundStorable",
+          "properties": {
+            "layout": "Messy12",
+            "collisionBox": {
+              "x1": 0,
+              "y1": 0,
+              "z1": 0,
+              "x2": 1,
+              "y2": 0.125,
+              "z2": 1
+            }
+          }
+        }
+      ]
+    },
     "side": "Server",
     "condition": {
       "when": "SmithingPlus_WorkableBits",

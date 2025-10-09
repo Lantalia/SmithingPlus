@@ -216,20 +216,20 @@ public static class AnvilRecipeSelectorPatch
                 () => capi.GetSmithingRecipes().Find(recipe => recipe.RecipeId == recipeId)?.Voxels.VoxelCount() ?? 0);
         if (voxelCount <= 0)
             return ingredientStack;
-        var stackSize = GetStackCount(ingredientStack.Collectible, voxelCount);
+        var stackSize = GetStackCount(ingredientStack, voxelCount);
         var adjustedIngredient = ingredientStack.Clone();
         adjustedIngredient.SetTemperature(capi.World, 0);
         adjustedIngredient.StackSize = stackSize;
         return adjustedIngredient;
     }
 
-    private static int GetStackCount(CollectibleObject c, int voxelCount)
+    private static int GetStackCount(ItemStack stack, int voxelCount)
     {
-        var workable = c.GetCollectibleInterface<IAnvilWorkable>();
-        return c switch
+        var workable = stack.Collectible.GetCollectibleInterface<IAnvilWorkable>();
+        return stack.Collectible switch
         {
-            _ when workable is not null => CeilDiv(voxelCount, workable.VoxelCountForHandbook(new ItemStack(c))),
-            _ => (int)Math.Ceiling(voxelCount * (c.CombustibleProps?.SmeltedRatio ?? 1.0) / 42.0)
+            _ when workable is not null => CeilDiv(voxelCount, workable.VoxelCountForHandbook(stack)),
+            _ => (int)Math.Ceiling(voxelCount * (stack.Collectible.CombustibleProps?.SmeltedRatio ?? 1.0) / 42.0)
         };
     }
 
