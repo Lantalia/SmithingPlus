@@ -1,67 +1,100 @@
 using System;
 using System.Linq;
+using JetBrains.Annotations;
 using SmithingPlus.Metal;
 using SmithingPlus.Util;
 using Vintagestory.API.Common;
+using Vintagestory.API.Common.CommandAbbr;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 
-namespace SmithingPlus;
+namespace SmithingPlus.Test;
 
-public partial class Core
+[UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
+public class TestCommands : ModSystem
 {
-    private static void RegisterServerCommands(ICoreServerAPI api)
+    public override bool ShouldLoad(EnumAppSide forSide)
     {
-        api.ChatCommands
-            .Create("setHeldTemp")
-            .WithAlias("spt")
-            .WithDescription("Set the temperature of held item.")
-            .RequiresPrivilege("controlserver")
-            .WithArgs(api.ChatCommands.Parsers.Float("temperature"),
-                api.ChatCommands.Parsers.OptionalWord("playerName"))
-            .HandleWith(args => OnSetHeldTempCommand(api, args));
-        api.ChatCommands
-            .Create("setHeldDurability")
-            .WithAlias("spd")
-            .WithDescription("Set the durability of held item.")
-            .RequiresPrivilege("controlserver")
-            .WithArgs(api.ChatCommands.Parsers.Float("durability"), api.ChatCommands.Parsers.OptionalWord("playerName"))
-            .HandleWith(args => OnSetHeldDurabilityCommand(api, args));
-        api.ChatCommands
-            .Create("getSmithingQuality")
-            .WithDescription("Get the smithing quality of player.")
-            .RequiresPrivilege("controlserver")
-            .WithArgs(api.ChatCommands.Parsers.OptionalWord("playerName"))
-            .HandleWith(args => OnGetSmithingQualityCommand(api, args));
-        api.ChatCommands
-            .Create("completeHeldWorkItem")
-            .WithAlias("spcw")
-            .WithDescription("Complete the held work item.")
-            .RequiresPrivilege("controlserver")
-            .WithArgs(api.ChatCommands.Parsers.OptionalWord("playerName"))
-            .HandleWith(args => OnCompleteHeldWorkitemCommand(api, args));
-        api.ChatCommands
-            .Create("setHeldAttribute")
-            .WithAlias("spsa")
-            .WithDescription("Set a bool attribute to held item stack.")
-            .RequiresPrivilege("controlserver")
-            .WithArgs(api.ChatCommands.Parsers.Word("attributeKey"), api.ChatCommands.Parsers.Word("attributeValue"),
-                api.ChatCommands.Parsers.OptionalWord("playerName"))
-            .HandleWith(args => OnSetHeldAttributeCommand(api, args));
-        api.ChatCommands
-            .Create("getMetalMaterial")
-            .WithDescription("Get the metal material of held item.")
-            .RequiresPrivilege("controlserver")
-            .WithArgs(api.ChatCommands.Parsers.OptionalWord("playerName"))
-            .HandleWith(args => OnGetMetalMaterialCommand(api, args));
-        api.ChatCommands
-            .Create("resetMetalMaterialCache")
-            .WithDescription("Reset the metal material cache.")
-            .RequiresPrivilege("controlserver")
-            .HandleWith(args => ResetMetalMaterialCache(api, args));
+        return forSide == EnumAppSide.Server;
     }
 
+    public override void StartServerSide(ICoreServerAPI api)
+    {
+        var command = api.ChatCommands.GetOrCreate("smithingplus").WithAlias("sp")
+            .RequiresPrivilege("root");
+
+        command.BeginSub("crucible")
+            .WithAlias("cr")
+            .WithDesc("Gives a hot crucible with molten copper")
+            .HandleWith(GiveCrucible)
+            .RequiresPlayer()
+            .EndSub();
+        
+        command.BeginSub("getSmithingQuality")
+            .WithDesc("Get the smithing quality stat of player.")
+            .WithArgs(api.ChatCommands.Parsers.OptionalWord("playerName"))
+            .HandleWith(args => OnGetSmithingQualityCommand(api, args))
+            .EndSub();
+        
+        command.BeginSub("completeHeldWorkItem")
+            .WithAlias("cmp")
+            .WithDescription("Complete the held work item.")
+            .WithArgs(api.ChatCommands.Parsers.OptionalWord("playerName"))
+            .HandleWith(args => OnCompleteHeldWorkitemCommand(api, args))
+            .EndSub();
+        
+        command.BeginSub("setBoolAttribute")
+            .WithAlias("setb")
+            .WithDescription("Set a bool attribute to held item stack.")
+            .WithArgs(api.ChatCommands.Parsers.Word("attributeKey"), api.ChatCommands.Parsers.Word("attributeValue"),
+                api.ChatCommands.Parsers.OptionalWord("playerName"))
+            .HandleWith(args => OnSetHeldAttributeCommand(api, args))
+            .EndSub();
+        
+        command.BeginSub("getMetalMaterial")
+            .WithDescription("Get the metal material of held item.")
+            .WithArgs(api.ChatCommands.Parsers.OptionalWord("playerName"))
+            .HandleWith(args => OnGetMetalMaterialCommand(api, args))
+            .EndSub();
+        
+        command.BeginSub("resetMetalMaterialCache")
+            .WithDescription("Reset the metal material cache.")
+            .HandleWith(_ => ResetMetalMaterialCache(api))
+            .EndSub();
+    }
+
+    private static TextCommandResult GiveCrucible(TextCommandCallingArgs args)
+    {
+        var player = args.Caller.Player as IServerPlayer;
+        if (player?.Entity.Api is not ICoreServerAPI api)
+            return TextCommandResult.Error("Something went wrong. Api is null.");
+
+        if (!player.InventoryManager.GetHotbarInventory().Any(x => x.Empty)) return TextCommandResult.Deferred;
+
+        ReadOnlySpan<string> crucibleColors =
+            ["blue", "fire", "black", "brown", "cream", "gray", "orange", "red", "tan"];
+        ReadOnlySpan<string> ingotMetals = ["copper", "iron", "steel"];
+        var color = api.World.Rand.GetItems(crucibleColors, 1)[0];
+        var metal = api.World.Rand.GetItems(ingotMetals, 1)[0];
+        var crucibleCode = $"crucible-{color}-smelted";
+        var ingotCode = $"ingot-{metal}";
+        var ingotItem = api.World.GetItem(new AssetLocation(ingotCode));
+        var block = api.World.GetBlock(new AssetLocation(crucibleCode));
+        if (block == null || ingotItem == null)
+            return TextCommandResult.Error($"Something went wrong. " +
+                                           $"Crucible is {crucibleCode}: {block}. " +
+                                           $"Ingot is {ingotCode}: {ingotItem}");
+        var outputStack = new ItemStack(ingotItem);
+        var crucibleStack = new ItemStack(block);
+        if (block is not BlockSmeltedContainer smeltedContainer)
+            return TextCommandResult.Error("Something went wrong. Crucible is not smelted container.");
+        smeltedContainer.SetContents(crucibleStack, outputStack, 1000);
+        crucibleStack.Collectible.SetTemperature(api.World, crucibleStack, 1500);
+        player.InventoryManager.TryGiveItemstack(crucibleStack, true);
+        return TextCommandResult.Deferred;
+    }
+    
     private static TextCommandResult OnSetHeldAttributeCommand(ICoreServerAPI api, TextCommandCallingArgs args)
     {
         var attributeKey = args[0] as string;
@@ -87,55 +120,6 @@ public partial class Core
         targetPlayer.InventoryManager.ActiveHotbarSlot.MarkDirty();
         return TextCommandResult.Success(
             $"Set held stack attribute {attributeKey} to value {attributeValue} for player '{targetPlayer.PlayerName}'.");
-    }
-
-    private static TextCommandResult OnSetHeldTempCommand(ICoreServerAPI api, TextCommandCallingArgs args)
-    {
-        var temperature = args[0] as float? ?? 0;
-        var playerName = args[1] as string;
-        IServerPlayer targetPlayer;
-        if (string.IsNullOrEmpty(playerName))
-        {
-            targetPlayer = args.Caller.Player as IServerPlayer;
-        }
-        else
-        {
-            targetPlayer = GetPlayerByName(api, playerName);
-            if (targetPlayer == null) return TextCommandResult.Error($"Player '{playerName}' not found.");
-        }
-
-        if (targetPlayer == null) return TextCommandResult.Error("Player not found.");
-        var heldStack = targetPlayer.InventoryManager.ActiveHotbarSlot.Itemstack;
-        if (heldStack == null) return TextCommandResult.Error($"Player '{targetPlayer.PlayerName}' has no held item.");
-        heldStack.Collectible.SetTemperature(targetPlayer.Entity.World, heldStack, temperature);
-        targetPlayer.InventoryManager.ActiveHotbarSlot.MarkDirty();
-        return TextCommandResult.Success(
-            $"Held item temperature set to {heldStack.Collectible.GetTemperature(targetPlayer.Entity.World, heldStack)} for player '{targetPlayer.PlayerName}'.");
-    }
-
-    private static TextCommandResult OnSetHeldDurabilityCommand(ICoreServerAPI api, TextCommandCallingArgs args)
-    {
-        var durability = args[0] as float? ?? 0;
-        var playerName = args[1] as string;
-        IServerPlayer targetPlayer;
-        if (string.IsNullOrEmpty(playerName))
-        {
-            targetPlayer = args.Caller.Player as IServerPlayer;
-        }
-        else
-        {
-            targetPlayer = GetPlayerByName(api, playerName);
-            if (targetPlayer == null) return TextCommandResult.Error($"Player '{playerName}' not found.");
-        }
-
-        if (targetPlayer == null) return TextCommandResult.Error("Player not found.");
-        var heldStack = targetPlayer.InventoryManager.ActiveHotbarSlot.Itemstack;
-        if (heldStack == null) return TextCommandResult.Error($"Player '{targetPlayer.PlayerName}' has no held item.");
-        heldStack.Attributes.SetInt("durability",
-            (int)Math.Clamp(durability, 1, heldStack.Collectible.GetMaxDurability(heldStack)));
-        targetPlayer.InventoryManager.ActiveHotbarSlot.MarkDirty();
-        return TextCommandResult.Success(
-            $"Held item durability set to {heldStack.Attributes.GetInt("durability")} for player '{targetPlayer.PlayerName}'.");
     }
 
     private static TextCommandResult OnCompleteHeldWorkitemCommand(ICoreServerAPI api, TextCommandCallingArgs args)
@@ -213,9 +197,9 @@ public partial class Core
             $"Held item '{heldStack.GetName()}' has metal material {metalMaterial.Code} with ingot {metalMaterial.IngotCode}.");
     }
 
-    private static TextCommandResult ResetMetalMaterialCache(ICoreServerAPI api, TextCommandCallingArgs args)
+    private static TextCommandResult ResetMetalMaterialCache(ICoreServerAPI api)
     {
-        ObjectCacheUtil.Delete(Api, MetalMaterialCacheKey);
+        ObjectCacheUtil.Delete(api, Core.MetalMaterialCacheKey);
         return TextCommandResult.Success("Metal material cache has been reset.");
     }
 

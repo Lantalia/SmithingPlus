@@ -9,12 +9,8 @@
   "charattribute-sp:toolRepairPenalty--0.1": "增加工具修理惩罚10%",
   "charattribute-sp:smithingQuality-0.2": "增加锻造项目耐久度20%",
   "charattribute-sp:smithingQuality--0.1": "减少锻造项目耐久度10%",
-
-  "Requires any of: ": "需要任意： ",
   "requires": "需要",
-
   "Mold for": "模具",
   "Requires for casting": "铸造需要",
-  "Can be cast in": "可以铸造于",
-  "transform-inforge": "在锻造炉中"
+  "Can be cast in": "可以铸造于"
 }

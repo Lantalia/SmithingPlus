@@ -1,0 +1,39 @@
+[
+  {
+    // Hijacked by anvil workable behavior, ingot ingredient is not used directly
+    "ingredient": {
+      "type": "item",
+      "code": "game:ingot-*",
+      "recipeAttributes": {
+        "nuggetRecipe": true
+      },
+      "name": "metal",
+      "allowedVariants": [
+        "copper",
+        "tinbronze",
+        "bismuthbronze",
+        "blackbronze",
+        "silver",
+        "gold",
+        "iron",
+        "meteoriciron",
+        "steel"
+      ]
+    },
+    "pattern": [
+      [
+        "___##___",
+        "___##___",
+        "___##___",
+        "___##___",
+        "___##___"
+      ]
+    ],
+    "name": "1 set of nails",
+    "output": {
+      "type": "item",
+      "code": "game:metalnailsandstrips-{metal}",
+      "stacksize": 1
+    }
+  }
+]

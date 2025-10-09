@@ -13,6 +13,15 @@ namespace SmithingPlus.Util;
 #nullable enable
 public static class CollectibleExtensions
 {
+    private static readonly JToken ForgeTransformToken = JToken.FromObject(
+        new ModelTransform
+        {
+            Translation = new Vec3f(0, -0.1f, 0.35f),
+            Rotation = new Vec3f(0, 90f, 0),
+            Scale = 0.7f
+        }
+    );
+
     private static void EnsureAttributesNotNull(this CollectibleObject obj)
     {
         obj.Attributes ??= new JsonObject(new JObject());
@@ -23,13 +32,7 @@ public static class CollectibleExtensions
         collObj.EnsureAttributesNotNull();
         var token = collObj.Attributes.Token;
         token["forgable"] = true;
-        var transform = new ModelTransform
-        {
-            Translation = new Vec3f(0, -0.1f, 0.35f),
-            Rotation = new Vec3f(0, 90f, 0),
-            Scale = 0.7f
-        };
-        token["inForgeTransform"] = JToken.FromObject(transform);
+        token["inForgeTransform"] = ForgeTransformToken;
         collObj.Attributes.Token = token;
     }
 
@@ -77,15 +80,6 @@ public static class CollectibleExtensions
         return smithingRecipe;
     }
 
-    public static IEnumerable<GridRecipe> GetGridRecipes(this CollectibleObject collObj, ICoreAPI api)
-    {
-        var gridRecipes =
-            from recipe in api.World.GridRecipes
-            where recipe.Output.ResolvedItemstack.Collectible.Code.Equals(collObj.Code)
-            select recipe;
-        return gridRecipes;
-    }
-
     public static IEnumerable<SmithingRecipe> GetSmithingRecipesAsIngredient(this CollectibleObject collObj,
         ICoreAPI api)
     {
@@ -108,6 +102,34 @@ public static class CollectibleExtensions
                   ing.ResolvedItemstack.Collectible.Code.Equals(collObj.Code)
             select recipe;
         return gridRecipes;
+    }
+
+    public static CollectibleObject? CollectibleWithVariant(this CollectibleObject collObj, string type, string value)
+    {
+        var api = collObj.GetField<ICoreAPI>("api");
+        if (api == null)
+        {
+            Core.Logger.Error("[CollectibleWithVariant] Reflection failed to get collectible object api field");
+            return null;
+        }
+
+        var codeWithVariant = collObj.CodeWithVariant(type, value);
+        switch (collObj.ItemClass)
+        {
+            case EnumItemClass.Block:
+                return api.World.GetBlock(codeWithVariant);
+            case EnumItemClass.Item:
+                return api.World.GetItem(codeWithVariant);
+            default:
+                Core.Logger.Error(
+                    $"[CollectibleWithVariant] Invalid ItemClass \"{collObj.ItemClass}\" for collectible {collObj.Code}");
+                return null;
+        }
+    }
+
+    public static T GetBehavior<T>(this CollectibleObject collObj, bool withInheritance) where T : CollectibleBehavior
+    {
+        return (T)collObj.GetCollectibleBehavior(typeof(T), withInheritance);
     }
 
     /*

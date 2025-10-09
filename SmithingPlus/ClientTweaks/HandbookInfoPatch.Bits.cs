@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
 using JetBrains.Annotations;
+using SmithingPlus.CastingTweaks;
 using SmithingPlus.SmithWithBits;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -14,7 +15,8 @@ namespace SmithingPlus.ClientTweaks;
 [UsedImplicitly(ImplicitUseTargetFlags.WithMembers)]
 public partial class HandbookInfoPatch
 {
-    [HarmonyPostfix, HarmonyPatch(typeof(CollectibleBehaviorHandbookTextAndExtraInfo), "addCreatedByInfo")]
+    [HarmonyPostfix]
+    [HarmonyPatch(typeof(CollectibleBehaviorHandbookTextAndExtraInfo), "addCreatedByInfo")]
     public static void PatchBitsInfo(
         CollectibleBehaviorHandbookTextAndExtraInfo __instance,
         ICoreClientAPI capi,
@@ -23,7 +25,8 @@ public partial class HandbookInfoPatch
         ItemStack stack,
         List<RichTextComponentBase> components)
     {
-        if (stack.Collectible is not (ItemNugget or ItemWorkableNugget)) return;
+        if (stack.Collectible is not ItemNugget ||
+            !stack.Collectible.HasBehavior<CollectibleBehaviorWorkableNugget>()) return;
         Core.MaxFuelBurnTemp ??= allStacks
             .Where(s => s.Collectible.CombustibleProps?.BurnTemperature > 0)
             .OrderByDescending(s => s.Collectible.CombustibleProps.BurnTemperature)
@@ -38,24 +41,9 @@ public partial class HandbookInfoPatch
         var haveText = components.Count > 0;
         if (moldStacks.Length <= 0) return;
         AddHeading(components, capi, "Can be cast in", ref haveText);
-
-        var groupedStacks = moldStacks
-            .GroupBy(s =>
-            {
-                var code = s.Collectible.Code;
-                return $"{code.Domain}:{string.Join("-", code.Path.Split('-').SkipLast(1))}";
-            })
-            .ToArray();
-
-        foreach (var group in groupedStacks)
-        {
-            var stacksInGroup = group.ToArray();
-            Array.ForEach(stacksInGroup, s =>
-                s.StackSize = s.ItemAttributes["requiredUnits"].AsInt());
-            var moldsSlideshow = new SlideshowItemstackTextComponent(capi, stacksInGroup, 40, EnumFloat.Inline,
-                    cs => openDetailPageFor(GuiHandbookItemStackPage.PageCodeForStack(cs)))
-                { PaddingLeft = 2 };
-            components.Add(moldsSlideshow);
-        }
+        
+        Array.ForEach(moldStacks, s =>
+            s.StackSize = ToolMoldUnitsPatch.GetPatchedRequiredUnits(capi, s.Block, stack));
+        AddAlignedSlideshows(capi, openDetailPageFor, components, moldStacks.ToList());
     }
 }

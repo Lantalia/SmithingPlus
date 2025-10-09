@@ -42,8 +42,9 @@ public class CollectibleBehaviorCastToolHead(CollectibleObject collObj) : Collec
         if (beAnvil.WorkItemStack != null || !CanWork(stack))
             return null;
         var recipe = stack.GetSingleSmithingRecipe(Api);
-        if (recipe == null) return null;
-        var voxels = recipe.Voxels.ToByteArray();
+        var durabilityPercent = stack.GetDurabilityPercentage();
+        if (recipe == null || durabilityPercent == null) return null;
+        var voxels = recipe.Voxels.ErodeToPercentage(durabilityPercent.Value);
         var world = beAnvil.Api.World;
         var random = world.Rand;
         var slagCount = (int)Math.Ceiling(0.2f * voxels.MaterialCount());

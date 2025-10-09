@@ -16,11 +16,14 @@ public class AnvilVoxelCountPatch
     [HarmonyPriority(Priority.VeryLow)]
     public static void Postfix_GetBlockInfo(BlockEntityAnvil __instance, IPlayer forPlayer, StringBuilder dsc)
     {
-        if (forPlayer?.InventoryManager?.ActiveHotbarSlot?.Itemstack?.Collectible is not ItemHammer &&
-            forPlayer?.InventoryManager?.ActiveHotbarSlot?.Itemstack?.Collectible is not IAnvilWorkable)
+        var activeStack = forPlayer?.InventoryManager?.ActiveHotbarSlot?.Itemstack;
+        if (activeStack == null)
+            return;
+        if (activeStack.Collectible is not ItemHammer &&
+            activeStack.Collectible.GetCollectibleInterface<IAnvilWorkable>()?.CanWork(activeStack) != true)
             return;
         if (__instance.recipeVoxels == null) return;
-        if (__instance.CanWorkCurrent == false) return;
+        if (!__instance.CanWorkCurrent) return;
         var voxelCount = CacheHelper.GetOrAdd(Core.RecipeVoxelCountCache, __instance.SelectedRecipeId, () =>
         {
             Core.Logger.VerboseDebug("Calculating voxel count for: {0}", __instance.SelectedRecipeId);

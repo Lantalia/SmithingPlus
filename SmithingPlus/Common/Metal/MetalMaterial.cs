@@ -51,7 +51,6 @@ public class MetalMaterial : IEquatable<MetalMaterial>
         else
         {
             var ingot = api.World.GetItem(new AssetLocation("game:ingot-copper"));
-            api.Logger.Warning("Ingot: " + ingot?.Code);
             Resolved = false;
             api.Logger.Error(
                 $"[MetalMaterial] Failed to resolve ingot item {IngotCode} for metal material {Code}");

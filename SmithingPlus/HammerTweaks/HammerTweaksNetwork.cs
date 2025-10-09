@@ -7,7 +7,7 @@ using Vintagestory.API.Server;
 
 namespace SmithingPlus.HammerTweaks;
 
-[UsedImplicitly]
+[UsedImplicitly(ImplicitUseKindFlags.InstantiatedNoFixedConstructorSignature)]
 public class HammerTweaksNetwork : ModSystem
 {
     private const string ChannelName = $"{Core.ModId}:{Core.HammerTweaksCategory}";
@@ -78,7 +78,7 @@ public class HammerTweaksNetwork : ModSystem
     private static void ReceiveFlipToolMode(IServerPlayer fromPlayer, FlipToolModePacket packet)
     {
         var activeSlot = fromPlayer.InventoryManager.ActiveHotbarSlot;
-        activeSlot?.Itemstack?.TempAttributes.SetInt(ModAttributes.FlipItemToolMode, packet.ToolMode);
+        activeSlot?.Itemstack?.TempAttributes.SetInt(ModTempAttributes.FlipItemToolMode, packet.ToolMode);
     }
 
     #endregion

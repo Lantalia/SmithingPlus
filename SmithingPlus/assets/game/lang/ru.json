@@ -9,12 +9,8 @@
   "charattribute-sp:toolRepairPenalty--0.1": "Увеличивает штрафы за ремонт инструментов на 10%",
   "charattribute-sp:smithingQuality-0.2": "Увеличивает прочность кузнечных изделий на 20%",
   "charattribute-sp:smithingQuality--0.1": "Снижает прочность кузнечных изделий на 10%",
-
-  "Requires any of: ": "Требуется любой из: ",
   "requires": "требует",
-
   "Mold for": "Форма для",
   "Requires for casting": "Требуется для отливки",
-  "Can be cast in": "Может быть отлито в",
-  "transform-inforge": "В кузнице"
+  "Can be cast in": "Может быть отлито в"
 }

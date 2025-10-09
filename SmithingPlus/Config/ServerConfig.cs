@@ -1,4 +1,5 @@
 using System.Linq;
+using Newtonsoft.Json;
 using SmithingPlus.Util;
 
 namespace SmithingPlus.Config;
@@ -17,9 +18,9 @@ public class ServerConfig
     public float BrokenToolVoxelPercent { get; set; } = 0.8f;
 
     public string RepairableToolSelector { get; set; } =
-        "@.*(pickaxe|shovel|saw|axe|hoe|knife|hammer|chisel|shears|sword|spear|bow|shield|sickle|scythe|tongs|wrench|solderingiron|cleaver|prospectingpick|crossbow|pistol|rifle|shotgun|blade).*";
+        "@.*(pickaxe|shovel|saw|axe|hoe|knife|hammer|chisel|shears|sword|spear|bow|shield|sickle|scythe|tongs|wrench|solderingiron|cleaver|prospectingpick|crossbow|pistol|rifle|shotgun|blade|halberd|poleaxe|quarterstaff|pike).*";
 
-    public string ToolHeadSelector { get; set; } = "@(.*)(head|blade|boss|barrel|stirrup)(.*)";
+    public string ToolHeadSelector { get; set; } = "@(.*)(head|blade|boss|barrel|stirrup|part)(.*)";
     public string IngotSelector { get; set; } = "@(.*):ingot-(.*)";
     public string WorkItemSelector { get; set; } = "@(.*):workitem-(.*)";
     public bool DontRepairBrokenToolHeads { get; set; } = false;
@@ -32,19 +33,21 @@ public class ServerConfig
     public string ArrowSelector { get; set; } = "@(.*):arrow-(.*)";
     public bool MetalCastingTweaks { get; set; } = true;
     public float CastToolDurabilityPenalty { get; set; } = 0.1f;
+    public bool DynamicMoldUnits { get; set; } = false;
     public bool HammerTweaks { get; set; } = true;
     public bool RotationRequiresTongs { get; set; } = false;
     public bool AnvilShowRecipeVoxels { get; set; } = true;
     public bool RememberHammerToolMode { get; set; } = true;
     public bool ShowWorkableTemperature { get; set; } = true;
-
     public bool HandbookExtraInfo { get; set; } = true;
+    public int AnvilRecipeSelectionColumns { get; set; } = 8;
 
     // public bool StoneSmithing { get; set; } = false;
+    [JsonIgnore]
     public string[] GetToolRepairForgettableAttributes =>
         ToolRepairForgettableAttributes.Split(",")
             .Append("durability")
-            .Append(ModAttributes.RepairedToolStack)
-            .Append(ModAttributes.CastTool)
+            .Append(ModStackAttributes.RepairedToolStack)
+            .Append(ModStackAttributes.CastTool)
             .ToArray();
 }

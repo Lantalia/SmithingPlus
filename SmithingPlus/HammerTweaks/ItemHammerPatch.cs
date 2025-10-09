@@ -34,18 +34,21 @@ public static class ItemHammerPatch
             {
                 var originalToolModesCount = HammerTweaksNetwork.OriginalToolModesCount ??= ___toolModes.Length;
                 // Store original tool modes count
-                slot.Itemstack.TempAttributes.SetInt(ModAttributes.FlipItemToolMode, originalToolModesCount);
+                slot.Itemstack.TempAttributes.SetInt(ModTempAttributes.FlipItemToolMode, originalToolModesCount);
                 // Sync attribute the server
                 HammerTweaksNetwork.SendFlipToolMode(capi, originalToolModesCount);
                 if (Core.Config.RotationRequiresTongs && !forPlayer.HasHeatResistantHandGear())
                 {
-                    __result = ___toolModes = 
-                            ClearExtraToolModes(__instance, slot, forPlayer, blockSel, ___toolModes, originalToolModesCount);
+                    __result = ___toolModes =
+                        ClearExtraToolModes(__instance, slot, forPlayer, blockSel, ___toolModes,
+                            originalToolModesCount);
                     return;
                 }
+
                 // Only add new toolmode if it hasn’t been added yet.
                 if (___toolModes.Length > originalToolModesCount) return;
             }
+
             var newModes = GetOrCreateFlipToolMode(capi);
             __result = ___toolModes = ___toolModes?.Concat(newModes).ToArray() ?? newModes;
         }

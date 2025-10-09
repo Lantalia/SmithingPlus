@@ -1,0 +1,14 @@
+{
+  "code": "metal",
+  "variants": [
+    {
+      "code": "eldrathium",
+      "meltPoint": 1084.62,
+      "boilPoint": 2562,
+      "density": 8960,
+      "specificHeatCapacity": 0.39,
+      "elemental": false,
+      "tier": 1
+    }
+  ]
+}

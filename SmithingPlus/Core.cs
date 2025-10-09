@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using SmithingPlus.BitsRecovery;
 using SmithingPlus.CastingTweaks;
 using SmithingPlus.ClientTweaks;
+using SmithingPlus.Common;
 using SmithingPlus.Config;
 using SmithingPlus.Metal;
 using SmithingPlus.SmithWithBits;
@@ -12,10 +13,9 @@ using SmithingPlus.ToolRecovery;
 using SmithingPlus.Util;
 using Vintagestory.API.Common;
 using Vintagestory.API.Common.Entities;
-using Vintagestory.API.Config;
+using Vintagestory.API.Datastructures;
 using Vintagestory.API.Server;
 using Vintagestory.API.Util;
-using Vintagestory.Client.NoObf;
 using Vintagestory.GameContent;
 
 namespace SmithingPlus;
@@ -37,30 +37,32 @@ public partial class Core : ModSystem
 
     public override void Start(ICoreAPI api)
     {
-        api.RegisterItemClass("ItemWorkableNugget", typeof(ItemWorkableNugget));
-        api.RegisterItemClass("ItemWorkableRod", typeof(ItemWorkableRod));
+        api.RegisterCollectibleBehaviorClass($"{ModId}:JsonAnvilWorkable",
+            typeof(CollectibleBehaviorJsonAnvilWorkable));
+        api.RegisterCollectibleBehaviorClass($"{ModId}:WorkableNugget", typeof(CollectibleBehaviorWorkableNugget));
         api.RegisterCollectibleBehaviorClass($"{ModId}:RepairableTool", typeof(CollectibleBehaviorRepairableTool));
         api.RegisterCollectibleBehaviorClass($"{ModId}:RepairableToolHead",
             typeof(CollectibleBehaviorRepairableToolHead));
         api.RegisterCollectibleBehaviorClass($"{ModId}:BrokenToolHead", typeof(CollectibleBehaviorBrokenToolHead));
-        api.RegisterCollectibleBehaviorClass($"{ModId}:AnvilWorkable", typeof(CollectibleBehaviorAnvilWorkable));
+        api.RegisterCollectibleBehaviorClass($"{ModId}:DisplayWorkableTemp",
+            typeof(CollectibleBehaviorDisplayWorkableTemp));
         api.RegisterCollectibleBehaviorClass($"{ModId}:ScrapeCrucible", typeof(CollectibleBehaviorScrapeCrucible));
         api.RegisterCollectibleBehaviorClass($"{ModId}:CastToolHead", typeof(CollectibleBehaviorCastToolHead));
         api.RegisterCollectibleBehaviorClass($"{ModId}:SmeltedContainer", typeof(CollectibleBehaviorSmeltedContainer));
+        api.RegisterCollectibleBehaviorClass($"{ModId}:RecycledBit", typeof(CollectibleBehaviorRecycledBit));
+
         api.RegisterEntityBehaviorClass($"{ModId}:RecyclableArrow", typeof(RecyclableArrowBehavior));
+
         api.RegisterItemClass($"{ModId}:ItemStoneHammer", typeof(ItemStoneHammer));
         api.RegisterBlockEntityClass($"{ModId}:StoneAnvil", typeof(BlockEntityStoneAnvil));
-        if (api.ModLoader.IsModEnabled("xskills"))
-            api.RegisterItemClass("ItemXWorkableNugget", typeof(ItemXWorkableNugget));
+
         Patch();
-        RegisterInForgeTransform();
     }
 
     public override void StartServerSide(ICoreServerAPI api)
     {
         api.Event.OnEntitySpawn += AddEntityBehaviors;
         api.Event.OnEntityLoaded += AddEntityBehaviors;
-        RegisterServerCommands(api);
     }
 
     private static void AddEntityBehaviors(Entity entity)
@@ -74,25 +76,24 @@ public partial class Core : ModSystem
     public override void AssetsFinalize(ICoreAPI api)
     {
         base.AssetsFinalize(api);
-        if (api.Side.IsClient()) return;
-        var ingotCode = new AssetLocation("game:ingot-copper");
-        var ingotRecipe = api.ModLoader.GetModSystem<RecipeRegistrySystem>().SmithingRecipes
-            .FirstOrDefault(r =>
-                r.Ingredient.Code.Equals(ingotCode) && r.Output.ResolvedItemstack.Collectible.Code.Equals(ingotCode));
-
         foreach (var collObj in api.World.Collectibles.Where(c => c?.Code != null))
         {
-            collObj.AddBehaviorIf<CollectibleBehaviorAnvilWorkable>(Config.ShowWorkableTemperature &&
-                                                                    collObj is IAnvilWorkable);
+            collObj.AddBehaviorIf<CollectibleBehaviorDisplayWorkableTemp>(
+                api.Side == EnumAppSide.Client &&
+                Config.ShowWorkableTemperature &&
+                collObj.GetCollectibleInterface<IAnvilWorkable>() is not null);
             collObj.AddBehaviorIf<CollectibleBehaviorScrapeCrucible>(Config.RecoverBitsOnSplit &&
                                                                      collObj is ItemChisel);
             collObj.AddBehaviorIf<CollectibleBehaviorSmeltedContainer>(Config.RecoverBitsOnSplit &&
                                                                        collObj is BlockSmeltedContainer);
+
             if (Config.MetalCastingTweaks && collObj.MatchesToolHeadSelector())
             {
                 collObj.AddBehavior<CollectibleBehaviorCastToolHead>();
                 collObj.MakeForgeable();
             }
+
+            collObj.AddBehaviorIf<CollectibleBehaviorRecycledBit>(collObj.Code.ToString().Contains("metalbit"));
 
             if ((collObj.Tool != null || (collObj.IsRepairableTool() && !collObj.MatchesToolHeadSelector())) &&
                 collObj.HasMetalMaterialSimple()) collObj.AddBehavior<CollectibleBehaviorRepairableTool>();
@@ -100,19 +101,47 @@ public partial class Core : ModSystem
             else if (WildcardUtil.Match(Config.WorkItemSelector, collObj.Code.ToString()))
                 collObj.AddBehavior<CollectibleBehaviorBrokenToolHead>();
 
-            // Adds metalbit-only smithing recipes to make ingots. This is a bit hacky as metalbit crafting uses the original
-            // ingot recipes, so to have these recipes be present we need ingot -> ingot recipes. These won't show up when smithing with
-            // ingots however, since the original ingot recipe (in the smithingplus domain) has "recipeAttributes": { "nuggetRecipe": true }
-            // A better solution would be to define the recipe with code instead of cloning an ingot recipe defined in the assets
+            // Adds workable-only smithing recipes to make ingots.
+            // This is a bit hacky as workable crafting uses the original
+            // ingot recipes, so to have these recipes be present we need ingot -> ingot recipes.
+            // These won't show up when smithing with
+            // ingots, however,
+            // since the original ingot recipe (in the smithingplus domain) has "recipeAttributes":
+            // { "workableRecipe": true }
+            // A better solution would be
+            // to define the recipe with code instead of cloning an ingot recipe defined in the assets
+            if (api.Side.IsClient()) continue;
+            var ingotCode = new AssetLocation("game:ingot-copper");
+            var ingotRecipe = api.ModLoader.GetModSystem<RecipeRegistrySystem>().SmithingRecipes
+                .FirstOrDefault(r =>
+                    r.Ingredient.Code.Equals(ingotCode) &&
+                    r.Output.ResolvedItemstack.Collectible.Code.Equals(ingotCode));
             if (ingotRecipe == null) continue;
             if (!WildcardUtil.Match(Config.IngotSelector, collObj.Code.ToString())) continue;
             if (api.ModLoader.GetModSystem<RecipeRegistrySystem>().SmithingRecipes
                 .Any(r => r.Ingredient.Code.Equals(collObj.Code) &&
                           r.Output.ResolvedItemstack.Collectible.Code.Equals(collObj.Code))) continue;
-            Logger.VerboseDebug($"Adding Metalbit-only recipes to {collObj.Code}");
-            var newRecipe = ingotRecipe.Clone();
-            newRecipe.Ingredient.Code = collObj.Code;
-            newRecipe.Output.Code = collObj.Code;
+            Logger.VerboseDebug($"Adding workable-only ingot recipe for {collObj.Code}");
+            var newRecipe = new SmithingRecipe
+            {
+                Name = ingotRecipe.Name,
+                Pattern = ingotRecipe.Pattern,
+                Voxels = ingotRecipe.Voxels,
+                Ingredient = new CraftingRecipeIngredient
+                {
+                    Type = collObj.ItemClass,
+                    Code = collObj.Code,
+                    RecipeAttributes = ingotRecipe.Ingredient.RecipeAttributes
+                },
+                Output = new JsonItemStack
+                {
+                    Type = collObj.ItemClass,
+                    Code = collObj.Code,
+                    StackSize = 1
+                },
+                RecipeId = api.ModLoader.GetModSystem<RecipeRegistrySystem>().SmithingRecipes.Count + 1
+            };
+            newRecipe.Ingredient.Resolve(api.World, $"[{ModId}] add ingot smithing recipe");
             newRecipe.Output.Resolve(api.World, $"[{ModId}] add ingot smithing recipe");
             api.ModLoader.GetModSystem<RecipeRegistrySystem>().SmithingRecipes.Add(newRecipe);
         }
@@ -125,6 +154,8 @@ public partial class Core : ModSystem
         Logger.VerboseDebug("Patching...");
         AlwaysPatchCategory.PatchIfEnabled(true);
         ToolRecoveryCategory.PatchIfEnabled(Config.EnableToolRecovery);
+        SmithingRecipeAttributesPatch.PatchIfEnabled(
+            Config.SmithWithBits || Config.BitsTopUp || Config.EnableToolRecovery, HarmonyInstance);
         ClientTweaksCategories.RememberHammerToolMode.PatchIfEnabled(Config.RememberHammerToolMode);
         ClientTweaksCategories.AnvilShowRecipeVoxels.PatchIfEnabled(Config.AnvilShowRecipeVoxels);
         ClientTweaksCategories.ShowWorkablePatches.PatchIfEnabled(Config.ShowWorkableTemperature);
@@ -132,26 +163,16 @@ public partial class Core : ModSystem
         BitsRecoveryCategory.PatchIfEnabled(Config.RecoverBitsOnSplit);
         HelveHammerBitsRecoveryCategory.PatchIfEnabled(Config.HelveHammerBitsRecovery);
         CastingTweaksCategory.PatchIfEnabled(Config.MetalCastingTweaks);
-        SmithingBitsCategory.PatchIfEnabled(Config.SmithWithBits || Config.BitsTopUp);
+        DynamicMoldsCategory.PatchIfEnabled(Config.DynamicMoldUnits);
+        BitSmithingCategory.PatchIfEnabled(Config.SmithWithBits || Config.BitsTopUp);
         HammerTweaksCategory.PatchIfEnabled(Config.HammerTweaks);
         //StoneSmithingCategory.PatchIfEnabled(true);
-    }
-
-    private static void RegisterInForgeTransform()
-    {
-        // Trans(form) rights! :3
-        if (!GuiDialogTransformEditor.extraTransforms?.Any(x => x.AttributeName == "inForgeTransform") == true)
-            GuiDialogTransformEditor.extraTransforms.Add(new TransformConfig
-            {
-                Title = Lang.Get("transform-inforge"),
-                AttributeName = "inForgeTransform"
-            });
     }
 
     private static void Unpatch()
     {
         Logger?.VerboseDebug("Unpatching...");
-        HarmonyInstance?.UnpatchAll();
+        HarmonyInstance?.UnpatchAll(ModId);
         HarmonyInstance = null;
     }
 

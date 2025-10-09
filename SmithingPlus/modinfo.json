@@ -1,9 +1,14 @@
 {
-  "type": "code",
+  "$schema": "https://moddbcdn.vintagestory.at/schema/modinfo.latest.json",
+  "type": "Code",
   "modid": "smithingplus",
   "name": "SmithingPlus",
-  "authors": [ "jayu" ],
-  "description": "Metal tool repair, smithing tweaks and QOL improvements.",
-  "version": "1.7.4",
-  "dependencies": { "game": "" }
+  "authors": [
+    "jayu"
+  ],
+  "description": "Metal tool repair, smithing tweaks and quality of life improvements.",
+  "version": "1.8.3",
+  "dependencies": {
+    "game": ""
+  }
 }
